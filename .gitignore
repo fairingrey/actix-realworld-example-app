@@ -1,0 +1,10 @@
+# Rust files
+/target
+**/*.rs.bk
+
+# IDEA files
+*.iml
+/.idea
+
+# env file
+.env
