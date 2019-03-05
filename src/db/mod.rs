@@ -18,11 +18,11 @@ use diesel::{
         PooledConnection,
     },
 };
+use crate::prelude::*;
 
 pub type Conn = diesel::pg::PgConnection;
 pub type PgPool = r2d2::Pool<ConnectionManager<Conn>>;
 pub type PooledConn = PooledConnection<ConnectionManager<Conn>>;
-
 
 pub struct DbExecutor(pub PgPool);
 
@@ -30,12 +30,15 @@ impl Actor for DbExecutor {
     type Context = SyncContext<Self>;
 }
 
-pub fn new_pool<S: Into<String>>(database_url: S) -> Result<PgPool, PoolError> {
+pub fn new_pool<S: Into<String>>(database_url: S) -> Result<PgPool> {
     let manager = ConnectionManager::<Conn>::new(database_url.into());
-    r2d2::Pool::builder().build(manager)
+    let pool = r2d2::Pool::builder().build(manager)?;
+    Ok(pool)
+
 }
 
-pub fn get_conn(pool: &PgPool) -> Result<PooledConn, PoolError> {
-    pool.get()
+pub fn get_conn(pool: &PgPool) -> Result<PooledConn> {
+    let conn = pool.get()?;
+    Ok(conn)
 }
 

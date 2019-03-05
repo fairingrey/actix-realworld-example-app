@@ -2,9 +2,12 @@ use actix_web::{
     error::ResponseError,
     HttpResponse,
 };
-use diesel::result::{
-    DatabaseErrorKind,
-    Error as DieselError,
+use diesel::{
+    result::{
+        DatabaseErrorKind,
+        Error as DieselError,
+    },
+    r2d2::PoolError,
 };
 use libreauth::pass::ErrorCode as PassErrorCode;
 use validator::{
@@ -49,6 +52,12 @@ impl From<DieselError> for Error {
             }
             _ => Error::InternalServerError
         }
+    }
+}
+
+impl From<PoolError> for Error {
+    fn from(error: PoolError) -> Self {
+        Error::InternalServerError
     }
 }
 
