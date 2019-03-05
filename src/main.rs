@@ -34,8 +34,6 @@ use actix_web::middleware::Logger;
 use actix_web::server;
 use std::env;
 
-const NUM_DB_THREADS: usize = 4;
-
 fn main() {
     dotenv::dotenv().ok();
 
