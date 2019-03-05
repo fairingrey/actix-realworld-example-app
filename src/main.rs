@@ -28,6 +28,7 @@ mod app;
 mod db;
 mod error;
 mod models;
+mod prelude;
 mod schema;
 mod utils;
 

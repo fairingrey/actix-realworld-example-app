@@ -16,7 +16,7 @@ use std::convert::From;
 // more error types can be found at below link but we should only need these for now
 // https://actix.rs/actix-web/actix_web/struct.HttpResponse.html
 #[derive(Fail, Debug)]
-pub enum ConduitError {
+pub enum Error {
     #[fail(display = "Internal Server Error")]
     InternalServerError,
 
@@ -26,46 +26,46 @@ pub enum ConduitError {
 
 // the ResponseError trait lets us convert errors to http responses with appropriate data
 // https://actix.rs/docs/errors/
-impl ResponseError for ConduitError {
+impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
-            ConduitError::InternalServerError => {
+            Error::InternalServerError => {
                 HttpResponse::InternalServerError().json("Internal Server Error")
             },
-            ConduitError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
+            Error::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
         }
     }
 }
 
-impl From<DieselError> for ConduitError {
+impl From<DieselError> for Error {
     fn from(error: DieselError) -> Self {
         match error {
             DieselError::DatabaseError(kind, info) => {
                 if let DatabaseErrorKind::UniqueViolation = kind {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
-                    return ConduitError::BadRequest(message);
+                    return Error::BadRequest(message);
                 }
-                ConduitError::InternalServerError
+                Error::InternalServerError
             }
-            _ => ConduitError::InternalServerError
+            _ => Error::InternalServerError
         }
     }
 }
 
-impl From<PassErrorCode> for ConduitError {
+impl From<PassErrorCode> for Error {
     fn from(error: PassErrorCode) -> Self {
-        ConduitError::BadRequest(format!("Invalid password provided.\n{:?}", error))
+        Error::BadRequest(format!("Invalid password provided.\n{:?}", error))
     }
 }
 
-impl From<ValidationError> for ConduitError {
+impl From<ValidationError> for Error {
     fn from(error: ValidationError) -> Self {
-        ConduitError::BadRequest(format!("Validation failed on some constraint.\n{:?}", error))
+        Error::BadRequest(format!("Validation failed on some constraint.\n{:?}", error))
     }
 }
 
-impl From<ValidationErrors> for ConduitError {
+impl From<ValidationErrors> for Error {
     fn from(errors: ValidationErrors) -> Self {
-        ConduitError::BadRequest(format!("Validation failed on some fields.\n{:?}", errors))
+        Error::BadRequest(format!("Validation failed on some fields.\n{:?}", errors))
     }
 }
