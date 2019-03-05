@@ -53,8 +53,8 @@ impl From<DieselError> for ConduitError {
 }
 
 impl From<PassErrorCode> for ConduitError {
-    fn from(_: PassErrorCode) -> Self {
-        ConduitError::BadRequest("Invalid password".to_string())
+    fn from(error: PassErrorCode) -> Self {
+        ConduitError::BadRequest(format!("Invalid password provided.\n{:?}", error))
     }
 }
 

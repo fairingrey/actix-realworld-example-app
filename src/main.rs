@@ -27,6 +27,7 @@ extern crate diesel;
 mod app;
 mod db;
 mod error;
+mod models;
 mod schema;
 mod utils;
 
