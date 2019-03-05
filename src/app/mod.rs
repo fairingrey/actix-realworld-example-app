@@ -7,13 +7,9 @@ use actix_web::{
 };
 use std::env;
 
-use crate::db::DbExecutor;
-use diesel::{
-    r2d2::{
-        self,
-        ConnectionManager,
-    },
-    PgConnection
+use crate::db::{
+    DbExecutor,
+    new_pool
 };
 
 const NUM_DB_THREADS: usize = 4;
@@ -32,10 +28,7 @@ pub fn create() -> App<AppState> {
     let frontend_origin = env::var("FRONTEND_ORIGIN").ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let database_manager = ConnectionManager::<PgConnection>::new(database_url);
-    let database_pool = r2d2::Pool::builder()
-        .build(database_manager)
-        .expect("Failed to create pool.");
+    let database_pool = new_pool(database_url).expect("Failed to create pool.");
 
     let database_address = SyncArbiter::start(NUM_DB_THREADS, move || DbExecutor(database_pool.clone()));
 
