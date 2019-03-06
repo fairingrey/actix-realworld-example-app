@@ -32,6 +32,7 @@ mod prelude;
 mod schema;
 mod utils;
 
+use actix::prelude::*;
 use actix_web::middleware::Logger;
 use actix_web::server;
 use std::env;
@@ -44,10 +45,16 @@ fn main() {
     }
     env_logger::init();
 
+    let sys = actix::System::new("r2d2-example");
+
     let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS is not set");
+
+    println!("You can access the server at {}", bind_address);
 
     server::new(app::create)
         .bind(&bind_address)
         .expect(&format!("Could not bind server to address {}", &bind_address))
         .start();
+
+    let _ = sys.run();
 }
