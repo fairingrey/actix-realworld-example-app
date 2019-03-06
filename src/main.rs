@@ -45,7 +45,7 @@ fn main() {
     }
     env_logger::init();
 
-    let sys = actix::System::new("r2d2-example");
+    let sys = actix::System::new("conduit");
 
     let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS is not set");
 
