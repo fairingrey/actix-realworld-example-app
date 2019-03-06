@@ -1,6 +1,6 @@
 use actix::prelude::{Addr, SyncArbiter};
 use actix_web::{
-    http::{header, StatusCode},
+    http::{header, Method, StatusCode},
     middleware::{
         cors::Cors,
         Logger
@@ -54,60 +54,28 @@ pub fn create() -> App<AppState> {
 
     App::with_state(state)
         .middleware(Logger::default())
+        .configure(|app| {
+            // check whether to enable CORS
+            match frontend_origin {
+                Some(ref origin) => {
+                    Cors::for_app(app)
+                        .allowed_origin(origin)
+                        .allowed_headers(vec![header::AUTHORIZATION, header::CONTENT_TYPE])
+                        .max_age(3600)
+                        .register()
+                }
+                None => app
+            }
+        })
         .resource("/", |r| r.f(index))
         .scope("/api", |scope| {
 
-            // check to enable CORS
-            let scope = match frontend_origin {
-                Some(ref origin) => scope.middleware(enable_cors(origin)),
-                None => scope,
-            };
-
-//            // Users
-//            let scope = scope
-//                .resource("users", |r| r.post().with(users::sign_up))
-//                .resource("users/login", |r| r.post().with(users::sign_in))
-//                .resource("user", |r| {
-//                    r.get().with(users::get_current);
-//                    r.put().with(users::update)
-//                });
-//
-//            // Profiles
-//            let scope = scope
-//                .resource("profiles/{username}", |r| r.get().with(profiles::get))
-//                .resource("profiles/{username}/follow", |r| {
-//                    r.post().with(profiles::follow);
-//                    r.delete().with(profiles::unfollow)
-//                });
-//
-//            // Articles
-//            let scope = scope
-//                .resource("articles", |r| {
-//                    r.get().with(articles::list);
-//                    r.post().with(articles::create)
-//                }).resource("articles/feed", |r| r.get().with(articles::feed))
-//                .resource("articles/{slug}", |r| {
-//                    r.get().with(articles::get);
-//                    r.put().with(articles::update);
-//                    r.delete().with(articles::delete)
-//                }).resource("articles/{slug}/favorite", |r| {
-//                r.post().with(articles::favorite);
-//                r.delete().with(articles::unfavorite);
-//            }).resource("articles/{slug}/comments", |r| {
-//                r.get().with(articles::comments::list);
-//                r.post().with(articles::comments::add)
-//            }).resource("articles/{slug}/comments/{id}", |r| {
-//                r.delete().with(articles::comments::delete)
-//            });
+            // Users
+            let scope = scope
+                .resource("users", |r| {
+                    r.method(Method::POST).with_async(users::sign_up)
+                });
 
             scope
         })
-}
-
-fn enable_cors(origin: &str) -> Cors {
-    Cors::build()
-        .allowed_origin(origin)
-        .allowed_headers(vec![header::AUTHORIZATION, header::CONTENT_TYPE])
-        .max_age(3600)
-        .finish()
 }

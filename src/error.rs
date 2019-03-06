@@ -1,4 +1,5 @@
 use actix_web::{
+    actix::MailboxError,
     error::ResponseError,
     HttpResponse,
 };
@@ -37,6 +38,12 @@ impl ResponseError for Error {
             },
             Error::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
         }
+    }
+}
+
+impl From<MailboxError> for Error {
+    fn from(error: MailboxError) -> Self {
+        Error::InternalServerError
     }
 }
 

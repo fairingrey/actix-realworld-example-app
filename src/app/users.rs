@@ -3,10 +3,14 @@ use actix_web::{
     HttpResponse,
     Json,
     Responder,
+    ResponseError,
+    State,
 };
+use libreauth::pass::ErrorCode as PassErrorCode;
 use futures::Future;
 use regex::Regex;
 use validator::Validate;
+use std::convert::From;
 
 use super::AppState;
 use crate::models::{NewUser, User};
@@ -18,19 +22,12 @@ lazy_static! {
     static ref RE_USERNAME: Regex = Regex::new(r"^[[:alnum:]]+$").unwrap();
 }
 
-// username
-//  - length: 1..=20
-//  - must be unique
-//  - can't be blank
-//  - must match /^[a-zA-Z0-9]+$/
-// email
-//   - must be unique
-//   - can't be blank
-//   - must match /\S+@\S+\.\S+/
-// password
-//   - length: 8..=72
+#[derive(Debug, Deserialize)]
+pub struct In<U> {
+    user: U,
+}
 
-// Messages
+// Client Messages
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct SignupUser {
@@ -61,22 +58,58 @@ pub struct UserChange {
     pub password: Option<String>,
 }
 
+// JSON response objects
+
+#[derive(Debug, Serialize)]
+pub struct UserResponse {
+    pub user: UserResponseInner,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserResponseInner {
+    pub email: String,
+    pub token: String,
+    pub username: String,
+    pub bio: Option<String>,
+    pub image: Option<String>,
+}
+
+impl From<User> for UserResponse {
+    fn from(user: User) -> Self {
+        UserResponse {
+            user: UserResponseInner {
+                email: user.email,
+                // TODO: make this a proper jwt
+                token: "".to_string(),
+                username: user.username,
+                bio: user.bio,
+                image: user.image,
+            }
+        }
+    }
+}
+
 // Route handlers
 
-//pub fn sign_up(form: Json<SignupUser>, req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
-//    let form = form.into_inner();
-//    form.validate();
-//
-//    let password = hasher().unwrap().hash(&form.password)?;
-//
-//    let new_user = NewUser {
-//        username: form.username.clone(),
-//        email: form.email.clone(),
-//        password: password,
-//        bio: None,
-//        image: None,
-//    };
-//
-//    // TODO
-//}
+pub fn sign_up((form, state): (Json<In<SignupUser>>, State<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
+    let signup_user = form.into_inner().user;
+
+    let password = hasher().hash(&signup_user.password).unwrap();
+
+    let new_user = NewUser {
+        username: signup_user.username.clone(),
+        email: signup_user.email.clone(),
+        password,
+        bio: None,
+        image: None,
+    };
+
+    state.db
+        .send(new_user)
+        .from_err()
+        .and_then(|res| match res {
+            Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
+            Err(e) => Ok(e.error_response()),
+        })
+}
 
