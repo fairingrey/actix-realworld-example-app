@@ -1,11 +1,11 @@
 -- Your SQL goes here
 CREATE TABLE comments (
   id SERIAL PRIMARY KEY,
+  article_id UUID NOT NULL REFERENCES articles (id),
+  user_id UUID NOT NULL REFERENCES users (id),
+  body TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  article_id UUID NOT NULL REFERENCES ARTICLES (ID),
-  user_id UUID NOT NULL REFERENCES USERS (ID),
-  body TEXT NOT NULL
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 SELECT diesel_manage_updated_at('comments');

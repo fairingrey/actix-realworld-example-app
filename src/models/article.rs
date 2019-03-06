@@ -25,8 +25,6 @@ pub struct NewArticle {
     pub body: String,
 }
 
-// XXX: One can create an ArticleChange with title but without slug.
-// It should be avoided.
 #[derive(Debug, AsChangeset)]
 #[table_name = "articles"]
 pub struct ArticleChange {

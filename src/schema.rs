@@ -23,11 +23,11 @@ table! {
 table! {
     comments (id) {
         id -> Int4,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
         article_id -> Uuid,
         user_id -> Uuid,
         body -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
