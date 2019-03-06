@@ -1,16 +1,25 @@
 use actix::prelude::{Addr, SyncArbiter};
 use actix_web::{
     http::{header, StatusCode},
-    middleware::Logger,
+    middleware::{
+        cors::Cors,
+        Logger
+    },
     App,
     HttpRequest,
 };
-use std::env;
-
 use crate::db::{
     DbExecutor,
     new_pool
 };
+use std::env;
+
+//mod articles;
+//mod error;
+//mod profiles;
+//mod res;
+//mod tags;
+//mod users;
 
 const NUM_DB_THREADS: usize = 4;
 
@@ -39,4 +48,22 @@ pub fn create() -> App<AppState> {
     App::with_state(state)
         .middleware(Logger::default())
         .resource("/", |r| r.f(index))
+        .scope("/api", |scope| {
+
+            // check to enable CORS
+            let scope = match frontend_origin {
+                Some(ref origin) => scope.middleware(enable_cors(origin)),
+                None => scope,
+            };
+
+            scope
+        })
+}
+
+fn enable_cors(origin: &str) -> Cors {
+    Cors::build()
+        .allowed_origin(origin)
+        .allowed_headers(vec![header::AUTHORIZATION, header::CONTENT_TYPE])
+        .max_age(3600)
+        .finish()
 }
