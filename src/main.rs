@@ -11,9 +11,11 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate jsonwebtoken as jwt;
+#[macro_use]
 extern crate lazy_static;
 extern crate libreauth;
 extern crate rand;
+extern crate regex;
 extern crate serde_json;
 extern crate slug;
 extern crate validator;
@@ -33,7 +35,6 @@ mod prelude;
 mod schema;
 mod utils;
 
-use actix::prelude::*;
 use actix_web::middleware::Logger;
 use actix_web::server;
 use std::env;

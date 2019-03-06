@@ -1,23 +1,22 @@
 table! {
     articles (id) {
-        id -> Int4,
-        author_id -> Int4,
-        slug -> Varchar,
-        title -> Varchar,
-        description -> Varchar,
-        body -> Varchar,
+        id -> Uuid,
+        author_id -> Uuid,
+        slug -> Text,
+        title -> Text,
+        description -> Text,
+        body -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
 }
 
 table! {
-    article_tags (id) {
-        id -> Int4,
+    article_tags (article_id, tag_name) {
+        article_id -> Uuid,
+        tag_name -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        article_id -> Int4,
-        tag_name -> Varchar,
     }
 }
 
@@ -26,37 +25,25 @@ table! {
         id -> Int4,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        article_id -> Int4,
-        user_id -> Int4,
-        body -> Varchar,
+        article_id -> Uuid,
+        user_id -> Uuid,
+        body -> Text,
     }
 }
 
 table! {
-    credentials (id) {
-        id -> Int4,
-        user_id -> Int4,
-        password_hash -> Varchar,
+    favorite_articles (user_id, article_id) {
+        user_id -> Uuid,
+        article_id -> Uuid,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
 }
 
 table! {
-    favorite_articles (id) {
-        id -> Int4,
-        user_id -> Int4,
-        article_id -> Int4,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-    }
-}
-
-table! {
-    followers (id) {
-        id -> Int4,
-        user_id -> Int4,
-        follower_id -> Int4,
+    followers (user_id, follower_id) {
+        user_id -> Uuid,
+        follower_id -> Uuid,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -64,11 +51,12 @@ table! {
 
 table! {
     users (id) {
-        id -> Int4,
-        username -> Varchar,
+        id -> Uuid,
+        username -> Text,
         email -> Varchar,
-        bio -> Nullable<Varchar>,
-        image -> Nullable<Varchar>,
+        password -> Text,
+        bio -> Nullable<Text>,
+        image -> Nullable<Text>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -78,7 +66,6 @@ joinable!(article_tags -> articles (article_id));
 joinable!(articles -> users (author_id));
 joinable!(comments -> articles (article_id));
 joinable!(comments -> users (user_id));
-joinable!(credentials -> users (user_id));
 joinable!(favorite_articles -> articles (article_id));
 joinable!(favorite_articles -> users (user_id));
 
@@ -86,7 +73,6 @@ allow_tables_to_appear_in_same_query!(
     articles,
     article_tags,
     comments,
-    credentials,
     favorite_articles,
     followers,
     users,
