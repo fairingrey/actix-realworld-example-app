@@ -38,4 +38,5 @@ pub fn create() -> App<AppState> {
 
     App::with_state(state)
         .middleware(Logger::default())
+        .resource("/", |r| r.f(index))
 }

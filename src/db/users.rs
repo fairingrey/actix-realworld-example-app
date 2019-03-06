@@ -17,7 +17,8 @@ pub fn insert(conn: &Conn, user: &NewUser, password: String) -> Result<User> {
         };
         diesel::insert_into(credentials::table)
             .values(cred)
-            .execute(conn);
+            .execute(conn)
+            .expect("Something went wrong adding the user");
         Ok(user)
     })
 }

@@ -41,12 +41,10 @@ fn main() {
 
     if env::var("RUST_LOG").ok().is_none() {
         env::set_var("RUST_LOG", "conduit=debug,actix_web=info");
-        env::set_var("RUST_BACKTRACE", "1");
     }
     env_logger::init();
 
-    let port = env::var("PORT").unwrap_or("8088".to_owned());
-    let bind_address = format!("127.0.0.1:{}", port);
+    let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS is not set");
 
     server::new(app::create)
         .bind(&bind_address)
