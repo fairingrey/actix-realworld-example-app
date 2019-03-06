@@ -1,4 +1,5 @@
-pub mod hasher;
+mod hasher;
+mod jwt;
 
 pub use self::{
     hasher::*

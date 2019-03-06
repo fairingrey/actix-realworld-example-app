@@ -10,7 +10,7 @@ extern crate actix_web;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate jsonwebtoken;
+extern crate jsonwebtoken as jwt;
 extern crate lazy_static;
 extern crate libreauth;
 extern crate rand;
@@ -25,6 +25,7 @@ extern crate chrono;
 extern crate diesel;
 
 mod app;
+mod config;
 mod db;
 mod error;
 mod models;
