@@ -1,11 +1,12 @@
 use chrono::NaiveDateTime;
+use uuid::Uuid;
 
 use crate::schema::{articles, favorite_articles};
 
 #[derive(Debug, Queryable)]
 pub struct Article {
-    pub id: i32,
-    pub author_id: i32,
+    pub id: Uuid,
+    pub author_id: Uuid,
     pub slug: String,
     pub title: String,
     pub description: String,
@@ -17,24 +18,11 @@ pub struct Article {
 #[derive(Debug, Insertable)]
 #[table_name = "articles"]
 pub struct NewArticle {
-    pub author_id: i32,
+    pub author_id: Uuid,
     pub slug: String,
     pub title: String,
     pub description: String,
     pub body: String,
-}
-
-#[cfg(test)]
-impl Default for NewArticle {
-    fn default() -> Self {
-        NewArticle {
-            author_id: 0,
-            slug: String::new(),
-            title: String::new(),
-            description: String::new(),
-            body: String::new(),
-        }
-    }
 }
 
 // XXX: One can create an ArticleChange with title but without slug.
@@ -51,6 +39,6 @@ pub struct ArticleChange {
 #[derive(Debug, Insertable)]
 #[table_name = "favorite_articles"]
 pub struct NewFavoriteArticle {
-    pub user_id: i32,
-    pub article_id: i32,
+    pub user_id: Uuid,
+    pub article_id: Uuid,
 }
