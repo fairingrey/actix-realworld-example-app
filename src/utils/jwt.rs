@@ -2,6 +2,7 @@ use chrono::{Duration, Utc};
 use jwt::{
     decode, encode,
     Header,
+    TokenData,
     Validation,
 };
 use uuid::Uuid;
@@ -16,11 +17,11 @@ pub struct Claims {
     pub exp: i64,
 }
 
-pub trait CanGenerateJwt {
+pub trait CanEncodeJwt {
     fn generate_jwt(&self) -> Result<String>;
 }
 
-impl CanGenerateJwt for User {
+impl CanEncodeJwt for User {
     fn generate_jwt(&self) -> Result<String> {
         let exp = (Utc::now() + Duration::days(21)).timestamp();
         let claims = Claims {
@@ -37,7 +38,17 @@ impl CanGenerateJwt for User {
 }
 
 pub trait CanDecodeJwt {
-    fn decode_jwt(&self, token: &String) -> Result<Claims>;
+    fn decode_jwt(&self) -> Result<TokenData<Claims>>;
+}
+
+impl CanDecodeJwt for String {
+    fn decode_jwt(&self) -> Result<TokenData<Claims>> {
+
+        match decode::<Claims>(&self, get_secret().as_ref(), &Validation::default()) {
+            Ok(res) => Ok(res),
+            Err(e) => Err(e.into()),
+        }
+    }
 }
 
 fn get_secret() -> String {

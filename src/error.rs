@@ -73,7 +73,7 @@ impl From<MailboxError> for Error {
 
 impl From<JwtError> for Error {
     fn from(error: JwtError) -> Self {
-        Error::InternalServerError
+        Error::BadRequest("JSON web token provided is invalid".to_string())
     }
 }
 

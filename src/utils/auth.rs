@@ -9,7 +9,6 @@ const TOKEN_PREFIX: &str = "Token ";
 #[derive(Debug)]
 pub struct Auth {
     pub user: User,
-    pub token: String,
 }
 
 pub trait CanAuthenticate {

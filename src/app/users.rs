@@ -19,7 +19,7 @@ use crate::models::{NewUser, User};
 use crate::db::users::*;
 use crate::utils::{
     hasher,
-    jwt::CanGenerateJwt,
+    jwt::CanEncodeJwt,
 };
 use crate::prelude::*;
 
