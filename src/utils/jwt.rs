@@ -1,7 +1,6 @@
 use chrono::{Duration, Utc};
 use jwt::{
     decode, encode,
-    errors::ErrorKind,
     Header,
     Validation,
 };

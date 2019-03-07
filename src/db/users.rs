@@ -1,5 +1,6 @@
 use actix::prelude::*;
 use diesel::prelude::*;
+use diesel::result::Error as DieselError;
 
 use crate::db::DbExecutor;
 use crate::models::{NewUser, User, UserChange};
@@ -20,11 +21,13 @@ impl Handler<NewUser> for DbExecutor {
 
         let conn = &self.0.get().expect("Connection couldn't be opened");
 
-        let user: User = diesel::insert_into(users)
+        let user: Result<User, DieselError> = diesel::insert_into(users)
             .values(new_user)
-            .get_result(conn)
-            .expect("Error adding a new user");
+            .get_result(conn);
 
-        Ok(user)
+        match user {
+            Ok(user) => Ok(user),
+            Err(e) => Err(e.into()),
+        }
     }
 }
