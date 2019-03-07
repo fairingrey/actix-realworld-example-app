@@ -7,7 +7,10 @@ use actix_web::{
     State,
 };
 use libreauth::pass::ErrorCode as PassErrorCode;
-use futures::Future;
+use futures::{
+    Future,
+    future::result,
+};
 use regex::Regex;
 use validator::Validate;
 use std::convert::From;
@@ -106,9 +109,11 @@ pub fn sign_up((form, state): (Json<In<SignupUser>>, State<AppState>)) -> impl F
         image: None,
     };
 
-    state.db
-        .send(new_user)
+    let db = state.db.clone();
+
+    result(signup_user.validate())
         .from_err()
+        .and_then(move |_| db.send(new_user).from_err())
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
             Err(e) => Ok(e.error_response()),

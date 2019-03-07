@@ -90,18 +90,18 @@ impl From<PoolError> for Error {
 
 impl From<PassErrorCode> for Error {
     fn from(error: PassErrorCode) -> Self {
-        Error::BadRequest(format!("Invalid password provided.\n{:?}", error))
+        Error::BadRequest("Invalid password provided.".to_string())
     }
 }
 
 impl From<ValidationError> for Error {
-    fn from(error: ValidationError) -> Self {
-        Error::BadRequest(format!("Validation failed on some constraint.\n{:?}", error))
+    fn from(_error: ValidationError) -> Self {
+        Error::BadRequest("Validation failed on some constraint.".to_string())
     }
 }
 
 impl From<ValidationErrors> for Error {
-    fn from(errors: ValidationErrors) -> Self {
-        Error::BadRequest(format!("Validation failed on some fields.\n{:?}", errors))
+    fn from(_errors: ValidationErrors) -> Self {
+        Error::BadRequest("Validation failed on some fields.".to_string())
     }
 }
