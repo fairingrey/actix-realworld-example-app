@@ -27,7 +27,6 @@ extern crate chrono;
 extern crate diesel;
 
 mod app;
-mod config;
 mod db;
 mod error;
 mod models;

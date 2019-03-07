@@ -9,7 +9,6 @@ use actix_web::{
     HttpRequest,
 };
 use crate::{
-    config::Config,
     db::{
         DbExecutor,
         new_pool
@@ -25,7 +24,6 @@ mod users;
 const NUM_DB_THREADS: usize = 4;
 
 pub struct AppState {
-    pub config: Config,
     pub db: Addr<DbExecutor>,
 }
 
@@ -35,12 +33,7 @@ fn index(_req: &HttpRequest<AppState>) -> &'static str {
 
 pub fn create() -> App<AppState> {
 
-    let jwt_secret_key = env::var("JWT_SECRET_KEY").expect("JWT_SECRET_KEY must be set");
     let frontend_origin = env::var("FRONTEND_ORIGIN").ok();
-    let config = Config {
-        jwt_secret_key: jwt_secret_key.clone(),
-        frontend_origin: frontend_origin.clone(),
-    };
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let database_pool = new_pool(database_url).expect("Failed to create pool.");
@@ -48,7 +41,6 @@ pub fn create() -> App<AppState> {
     let database_address = SyncArbiter::start(NUM_DB_THREADS, move || DbExecutor(database_pool.clone()));
 
     let state = AppState {
-        config,
         db: database_address.clone(),
     };
 
@@ -73,7 +65,9 @@ pub fn create() -> App<AppState> {
             // Users
             let scope = scope
                 .resource("users", |r| {
-                    r.method(Method::POST).with_async(users::sign_up)
+                    r.method(Method::POST).with_async_config(users::sign_up, |(json_cfg, )| {
+                        json_cfg.0.limit(4096); // <- limit size of the payload
+                    })
                 });
 
             scope

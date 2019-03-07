@@ -10,6 +10,7 @@ use diesel::{
     },
     r2d2::PoolError,
 };
+use jwt::errors::Error as JwtError;
 use libreauth::pass::ErrorCode as PassErrorCode;
 use validator::{
     ValidationError,
@@ -43,6 +44,12 @@ impl ResponseError for Error {
 
 impl From<MailboxError> for Error {
     fn from(error: MailboxError) -> Self {
+        Error::InternalServerError
+    }
+}
+
+impl From<JwtError> for Error {
+    fn from(error: JwtError) -> Self {
         Error::InternalServerError
     }
 }

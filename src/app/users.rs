@@ -15,7 +15,10 @@ use std::convert::From;
 use super::AppState;
 use crate::models::{NewUser, User};
 use crate::db::users::*;
-use crate::utils::hasher;
+use crate::utils::{
+    hasher,
+    jwt::CanGenerateJwt,
+};
 use crate::prelude::*;
 
 lazy_static! {
@@ -78,9 +81,8 @@ impl From<User> for UserResponse {
     fn from(user: User) -> Self {
         UserResponse {
             user: UserResponseInner {
+                token: user.generate_jwt().unwrap(),
                 email: user.email,
-                // TODO: make this a proper jwt
-                token: "".to_string(),
                 username: user.username,
                 bio: user.bio,
                 image: user.image,
