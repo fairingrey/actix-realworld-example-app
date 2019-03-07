@@ -19,9 +19,8 @@ impl Handler<NewUser> for DbExecutor {
 
         let conn = &self.0.get().expect("Connection couldn't be opened");
 
-        let user: Result<User, DieselError> = diesel::insert_into(users)
-            .values(new_user)
-            .get_result(conn);
+        let user: Result<User, DieselError> =
+            diesel::insert_into(users).values(new_user).get_result(conn);
 
         match user {
             Ok(user) => Ok(user),

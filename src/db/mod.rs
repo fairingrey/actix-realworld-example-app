@@ -3,19 +3,13 @@ pub mod comments;
 pub mod followers;
 pub mod users;
 
+use crate::prelude::*;
 use actix::prelude::{Actor, SyncContext};
 use diesel::{
     pg::PgConnection,
-    r2d2::{
-        self,
-        ConnectionManager,
-        Pool,
-        PoolError,
-        PooledConnection,
-    },
+    r2d2::{self, ConnectionManager, Pool, PoolError, PooledConnection},
     result::Error as DieselError,
 };
-use crate::prelude::*;
 
 pub type Conn = diesel::pg::PgConnection;
 pub type PgPool = r2d2::Pool<ConnectionManager<Conn>>;

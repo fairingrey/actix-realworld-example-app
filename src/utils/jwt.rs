@@ -1,12 +1,7 @@
 use chrono::{Duration, Utc};
-use jwt::{
-    decode, encode,
-    Header,
-    TokenData,
-    Validation,
-};
-use uuid::Uuid;
+use jwt::{decode, encode, Header, TokenData, Validation};
 use std::env;
+use uuid::Uuid;
 
 use crate::models::User;
 use crate::prelude::*;
@@ -24,10 +19,7 @@ pub trait CanEncodeJwt {
 impl CanEncodeJwt for User {
     fn generate_jwt(&self) -> Result<String> {
         let exp = (Utc::now() + Duration::days(21)).timestamp();
-        let claims = Claims {
-            id: self.id,
-            exp,
-        };
+        let claims = Claims { id: self.id, exp };
 
         let header = Header::default();
         let secret = &get_secret();
@@ -43,7 +35,6 @@ pub trait CanDecodeJwt {
 
 impl CanDecodeJwt for String {
     fn decode_jwt(&self) -> Result<TokenData<Claims>> {
-
         match decode::<Claims>(&self, get_secret().as_ref(), &Validation::default()) {
             Ok(res) => Ok(res),
             Err(e) => Err(e.into()),

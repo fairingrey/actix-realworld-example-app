@@ -1,32 +1,22 @@
 use actix_web::{
     actix::MailboxError,
-    error::{
-        self,
-        ResponseError,
-    },
+    error::{self, ResponseError},
     http::StatusCode,
     HttpResponse,
 };
 use diesel::{
-    result::{
-        DatabaseErrorKind,
-        Error as DieselError,
-    },
     r2d2::PoolError,
+    result::{DatabaseErrorKind, Error as DieselError},
 };
 use jwt::errors::Error as JwtError;
 use libreauth::pass::ErrorCode as PassErrorCode;
-use validator::{
-    ValidationError,
-    ValidationErrors,
-};
 use std::convert::From;
+use validator::{ValidationError, ValidationErrors};
 
 // more error types can be found at below link but we should only need these for now
 // https://actix.rs/actix-web/actix_web/struct.HttpResponse.html
 #[derive(Fail, Debug)]
 pub enum Error {
-
     // 400
     #[fail(display = "Bad Request: {}", _0)]
     BadRequest(String),
@@ -46,7 +36,6 @@ pub enum Error {
     // 500
     #[fail(display = "Internal Server Error")]
     InternalServerError,
-
 }
 
 // the ResponseError trait lets us convert errors to http responses with appropriate data
@@ -57,10 +46,12 @@ impl ResponseError for Error {
             Error::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
             Error::Unauthorized(ref message) => HttpResponse::Unauthorized().json(message),
             Error::Forbidden(ref message) => HttpResponse::Forbidden().json(message),
-            Error::UnprocessableEntity(ref message) => HttpResponse::build(StatusCode::UNPROCESSABLE_ENTITY).json(message),
+            Error::UnprocessableEntity(ref message) => {
+                HttpResponse::build(StatusCode::UNPROCESSABLE_ENTITY).json(message)
+            }
             Error::InternalServerError => {
                 HttpResponse::InternalServerError().json("Internal Server Error")
-            },
+            }
         }
     }
 }
@@ -87,7 +78,7 @@ impl From<DieselError> for Error {
                 }
                 Error::InternalServerError
             }
-            _ => Error::InternalServerError
+            _ => Error::InternalServerError,
         }
     }
 }

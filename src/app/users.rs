@@ -1,27 +1,15 @@
-use actix_web::{
-    HttpRequest,
-    HttpResponse,
-    Json,
-    Responder,
-    ResponseError,
-};
+use actix_web::{HttpRequest, HttpResponse, Json, Responder, ResponseError};
+use futures::{future::result, Future};
 use libreauth::pass::ErrorCode as PassErrorCode;
-use futures::{
-    Future,
-    future::result,
-};
 use regex::Regex;
-use validator::Validate;
 use std::convert::From;
+use validator::Validate;
 
 use super::AppState;
-use crate::models::{NewUser, User};
 use crate::db::users::*;
-use crate::utils::{
-    hasher,
-    jwt::CanEncodeJwt,
-};
+use crate::models::{NewUser, User};
 use crate::prelude::*;
+use crate::utils::{hasher, jwt::CanEncodeJwt};
 
 lazy_static! {
     static ref RE_USERNAME: Regex = Regex::new(r"^[[:alnum:]]+$").unwrap();
@@ -89,7 +77,7 @@ impl From<User> for UserResponse {
                 username: user.username,
                 bio: user.bio,
                 image: user.image,
-            }
+            },
         }
     }
 }
@@ -103,14 +91,16 @@ impl UserResponse {
                 username: user.username,
                 bio: user.bio,
                 image: user.image,
-            }
+            },
         }
     }
 }
 
 // Route handlers
 
-pub fn sign_up((form, req): (Json<In<SignupUser>>, HttpRequest<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
+pub fn sign_up(
+    (form, req): (Json<In<SignupUser>>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
     let signup_user = form.into_inner().user;
 
     let password = hasher().hash(&signup_user.password).unwrap();

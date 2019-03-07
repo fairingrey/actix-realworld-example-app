@@ -1,13 +1,7 @@
 use actix_web::{
-    Error as AWError,
     error::Result,
-    HttpRequest,
-    HttpResponse,
-    middleware::{
-        Middleware,
-        Started,
-        Response,
-    }
+    middleware::{Middleware, Response, Started},
+    Error as AWError, HttpRequest, HttpResponse,
 };
 
 use crate::prelude::*;
@@ -15,7 +9,6 @@ use crate::prelude::*;
 pub struct TokenService;
 
 impl<S> Middleware<S> for TokenService {
-
     fn start(&self, req: &HttpRequest<S>) -> Result<Started> {
         unimplemented!()
     }
