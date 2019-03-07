@@ -34,7 +34,6 @@ mod prelude;
 mod schema;
 mod utils;
 
-use actix_web::middleware::Logger;
 use actix_web::server;
 use std::env;
 
