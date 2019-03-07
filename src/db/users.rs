@@ -7,8 +7,6 @@ use crate::models::{NewUser, User, UserChange};
 use crate::prelude::*;
 use crate::schema::users;
 
-// Note that the password should be passed in already hashed by crate::utils::hasher.
-
 impl Message for NewUser {
     type Result = Result<User, Error>;
 }

@@ -18,7 +18,7 @@ use jwt::errors::Error as JwtError;
 use libreauth::pass::ErrorCode as PassErrorCode;
 use validator::{
     ValidationError,
-    ValidationErrors
+    ValidationErrors,
 };
 use std::convert::From;
 
@@ -30,6 +30,14 @@ pub enum Error {
     // 400
     #[fail(display = "Bad Request: {}", _0)]
     BadRequest(String),
+
+    // 401
+    #[fail(display = "Unauthorized: {}", _0)]
+    Unauthorized(String),
+
+    // 403
+    #[fail(display = "Forbidden: {}", _0)]
+    Forbidden(String),
 
     // 422
     #[fail(display = "Unprocessable Entity: {}", _0)]
@@ -47,6 +55,8 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
             Error::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
+            Error::Unauthorized(ref message) => HttpResponse::Unauthorized().json(message),
+            Error::Forbidden(ref message) => HttpResponse::Forbidden().json(message),
             Error::UnprocessableEntity(ref message) => HttpResponse::build(StatusCode::UNPROCESSABLE_ENTITY).json(message),
             Error::InternalServerError => {
                 HttpResponse::InternalServerError().json("Internal Server Error")

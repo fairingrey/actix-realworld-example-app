@@ -16,10 +16,10 @@ use crate::{
 };
 use std::env;
 
-mod articles;
-mod profiles;
-mod tags;
-mod users;
+pub mod articles;
+pub mod profiles;
+pub mod tags;
+pub mod users;
 
 const NUM_DB_THREADS: usize = 4;
 

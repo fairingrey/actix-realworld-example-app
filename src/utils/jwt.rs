@@ -36,6 +36,10 @@ impl CanGenerateJwt for User {
     }
 }
 
+pub trait CanDecodeJwt {
+    fn decode_jwt(&self, token: &String) -> Result<Claims>;
+}
+
 fn get_secret() -> String {
     env::var("JWT_SECRET").unwrap_or_else(|_| "secret".into())
 }

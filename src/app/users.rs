@@ -4,7 +4,6 @@ use actix_web::{
     Json,
     Responder,
     ResponseError,
-    State,
 };
 use libreauth::pass::ErrorCode as PassErrorCode;
 use futures::{
@@ -80,6 +79,7 @@ pub struct UserResponseInner {
     pub image: Option<String>,
 }
 
+// The spec requires the response be in this order
 impl From<User> for UserResponse {
     fn from(user: User) -> Self {
         UserResponse {
@@ -94,9 +94,23 @@ impl From<User> for UserResponse {
     }
 }
 
+impl UserResponse {
+    fn create_with_token(token: String, user: User) -> Self {
+        UserResponse {
+            user: UserResponseInner {
+                token,
+                email: user.email,
+                username: user.username,
+                bio: user.bio,
+                image: user.image,
+            }
+        }
+    }
+}
+
 // Route handlers
 
-pub fn sign_up((form, state): (Json<In<SignupUser>>, State<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
+pub fn sign_up((form, req): (Json<In<SignupUser>>, HttpRequest<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
     let signup_user = form.into_inner().user;
 
     let password = hasher().hash(&signup_user.password).unwrap();
@@ -109,7 +123,7 @@ pub fn sign_up((form, state): (Json<In<SignupUser>>, State<AppState>)) -> impl F
         image: None,
     };
 
-    let db = state.db.clone();
+    let db = req.state().db.clone();
 
     result(signup_user.validate())
         .from_err()
@@ -120,3 +134,8 @@ pub fn sign_up((form, state): (Json<In<SignupUser>>, State<AppState>)) -> impl F
         })
 }
 
+//pub fn sign_in((form, req): (Json<In<SigninUser>>, HttpRequest<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
+//    let signin_user = form.into_inner().user;
+//
+//    // TODO
+//}
