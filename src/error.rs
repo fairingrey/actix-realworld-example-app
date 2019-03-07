@@ -21,7 +21,6 @@ use validator::{
     ValidationErrors
 };
 use std::convert::From;
-use actix_web::ws::start;
 
 // more error types can be found at below link but we should only need these for now
 // https://actix.rs/actix-web/actix_web/struct.HttpResponse.html
