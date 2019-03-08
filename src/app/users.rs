@@ -1,5 +1,5 @@
 use actix_web::{HttpRequest, HttpResponse, Json, ResponseError};
-use futures::{future::result, Future};
+use futures::{future::{result, ok}, Future};
 use regex::Regex;
 use std::convert::From;
 use validator::Validate;
@@ -148,12 +148,13 @@ pub fn update(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let update_user = form.into_inner().user;
 
-    authenticate(&req)
+    let db = req.state().db.clone();
+
+    result(update_user.validate())
+        .from_err()
+        .and_then(move |_| authenticate(&req))
         .and_then(move |auth| {
-            req.state()
-                .db
-                .send(UpdateUserOuter { auth, update_user })
-                .from_err()
+                db.send(UpdateUserOuter { auth, update_user }).from_err()
         })
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
