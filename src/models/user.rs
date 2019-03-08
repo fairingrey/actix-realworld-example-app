@@ -31,6 +31,6 @@ pub struct UserChange {
     pub username: Option<String>,
     pub email: Option<String>,
     pub password: Option<String>,
-    pub bio: Option<Option<String>>,
-    pub image: Option<Option<String>>,
+    pub bio: Option<String>,
+    pub image: Option<String>,
 }

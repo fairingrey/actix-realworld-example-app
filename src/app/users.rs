@@ -116,7 +116,7 @@ pub fn register(
         })
 }
 
-pub fn sign_in(
+pub fn login(
     (form, req): (Json<In<LoginUser>>, HttpRequest<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let login_user = form.into_inner().user;

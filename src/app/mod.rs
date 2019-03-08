@@ -56,7 +56,7 @@ pub fn create() -> App<AppState> {
                     r.method(Method::POST).with_async(users::register)
                 })
                 .resource("users/login", |r| {
-                    r.method(Method::POST).with_async(users::sign_in)
+                    r.method(Method::POST).with_async(users::login)
                 })
                 .resource("user", |r| {
                     r.method(Method::GET).with_async(users::get_current)
