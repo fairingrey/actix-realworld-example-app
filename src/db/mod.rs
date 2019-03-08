@@ -7,7 +7,7 @@ use crate::prelude::*;
 use actix::prelude::{Actor, SyncContext};
 use diesel::{
     pg::PgConnection,
-    r2d2::{self, ConnectionManager, Pool, PooledConnection},
+    r2d2::{self, ConnectionManager, Pool},
 };
 
 pub type Conn = PgConnection;

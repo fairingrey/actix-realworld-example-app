@@ -25,11 +25,6 @@ pub struct NewUser {
     pub image: Option<String>,
 }
 
-#[derive(Debug, Queryable)]
-pub struct FindUserById {
-    pub id: Uuid,
-}
-
 #[derive(Debug, AsChangeset)]
 #[table_name = "users"]
 pub struct UserChange {

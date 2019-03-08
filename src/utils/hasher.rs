@@ -1,7 +1,7 @@
 use libreauth::pass::{Algorithm, HashBuilder, Hasher};
 
-const PWD_ALGORITHM: Algorithm = Algorithm::Argon2;
-const PWD_SCHEME_VERSION: usize = 1;
+pub const PWD_ALGORITHM: Algorithm = Algorithm::Argon2;
+pub const PWD_SCHEME_VERSION: usize = 1;
 
 // This should never fail, unless it's given invalid parameters
 pub fn hasher() -> Hasher {

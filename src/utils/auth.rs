@@ -1,8 +1,9 @@
 use actix_web::{http::header::AUTHORIZATION, HttpRequest};
 use futures::future::Future;
+use uuid::Uuid;
 
 use crate::app::AppState;
-use crate::models::{FindUserById, User};
+use crate::models::User;
 use crate::prelude::*;
 use crate::utils::jwt::CanDecodeJwt;
 
@@ -12,6 +13,12 @@ const TOKEN_PREFIX: &str = "Token ";
 #[derive(Debug)]
 pub struct Auth {
     pub user: User,
+}
+
+// message
+#[derive(Debug)]
+pub struct FindUserById {
+    pub id: Uuid,
 }
 
 pub trait CanAuthenticate {

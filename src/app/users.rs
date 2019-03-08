@@ -6,7 +6,7 @@ use std::convert::From;
 use validator::Validate;
 
 use super::AppState;
-use crate::models::{NewUser, User};
+use crate::models::User;
 use crate::prelude::*;
 use crate::utils::{hasher, jwt::CanGenerateJwt};
 
@@ -102,29 +102,28 @@ pub fn sign_up(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let signup_user = form.into_inner().user;
 
-    let password = hasher().hash(&signup_user.password).unwrap();
-
-    let new_user = NewUser {
-        username: signup_user.username.clone(),
-        email: signup_user.email.clone(),
-        password,
-        bio: None,
-        image: None,
-    };
-
     let db = req.state().db.clone();
 
     result(signup_user.validate())
         .from_err()
-        .and_then(move |_| db.send(new_user).from_err())
+        .and_then(move |_| db.send(signup_user).from_err())
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
             Err(e) => Ok(e.error_response()),
         })
 }
 
-//pub fn sign_in((form, req): (Json<In<SigninUser>>, HttpRequest<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
-//    let signin_user = form.into_inner().user;
-//
-//    // TODO
-//}
+pub fn sign_in(
+    (form, req): (Json<In<SigninUser>>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let signin_user = form.into_inner().user;
+
+    req.state()
+        .db
+        .send(signin_user)
+        .from_err()
+        .and_then(|res| match res {
+            Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
+            Err(e) => Ok(e.error_response()),
+        })
+}

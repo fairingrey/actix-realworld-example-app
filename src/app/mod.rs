@@ -1,7 +1,4 @@
-use crate::{
-    db::{new_pool, DbExecutor},
-    utils::auth::Auth,
-};
+use crate::db::{new_pool, DbExecutor};
 use actix::prelude::{Addr, SyncArbiter};
 use actix_web::{
     http::{header, Method},
@@ -54,12 +51,13 @@ pub fn create() -> App<AppState> {
         .resource("/", |r| r.f(index))
         .scope("/api", |scope| {
             // Users
-            let scope = scope.resource("users", |r| {
-                r.method(Method::POST)
-                    .with_async_config(users::sign_up, |(json_cfg,)| {
-                        json_cfg.0.limit(4096); // <- limit size of the payload
-                    })
-            });
+            let scope = scope
+                .resource("users", |r| {
+                    r.method(Method::POST).with_async(users::sign_up)
+                })
+                .resource("users/login", |r| {
+                    r.method(Method::POST).with_async(users::sign_in)
+                });
 
             scope
         })
