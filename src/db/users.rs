@@ -46,17 +46,18 @@ impl Handler<SigninUser> for DbExecutor {
         // TODO: this is bugged
         use crate::schema::users::dsl::*;
 
-        let provided_password = &signin_user.password;
+        let provided_password_raw = &signin_user.password;
 
         let conn = &self.0.get().expect("Connection couldn't be opened");
 
         let mut stored_user: User = users.filter(email.eq(signin_user.email)).first(conn)?;
         let checker = HashBuilder::from_phc(&stored_user.password).unwrap();
 
-        if checker.is_valid(provided_password) {
+        if checker.is_valid(provided_password_raw) {
             if checker.needs_update(PWD_SCHEME_VERSION) {
+                let new_password = hasher().hash(provided_password_raw)?;
                 stored_user = diesel::update(users.find(stored_user.id))
-                    .set(password.eq(provided_password))
+                    .set(password.eq(new_password))
                     .get_result(conn)?
             }
             Ok(stored_user)
