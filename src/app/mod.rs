@@ -19,7 +19,6 @@ const NUM_DB_THREADS: usize = 4;
 
 pub struct AppState {
     pub db: Addr<DbExecutor>,
-    pub auth: Option<Auth>,
 }
 
 fn index(_req: &HttpRequest<AppState>) -> &'static str {
@@ -37,7 +36,6 @@ pub fn create() -> App<AppState> {
 
     let state = AppState {
         db: database_address.clone(),
-        auth: None,
     };
 
     App::with_state(state)
