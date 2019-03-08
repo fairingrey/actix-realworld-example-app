@@ -25,14 +25,14 @@ impl CanAuthenticate for HttpRequest<AppState> {
             Some(token) => token.to_str().unwrap(),
             None => {
                 return Err(Error::Unauthorized(
-                    "An authorization header was present but nothing was provided".to_string(),
+                    "No authorization header provided".to_string(),
                 ))
             }
         };
 
         if !token.starts_with(TOKEN_PREFIX) {
             return Err(Error::Unauthorized(
-                "Invalid Authorization method".to_string(),
+                "Invalid authorization field".to_string(),
             ));
         }
         let token = token.replacen(TOKEN_PREFIX, "", 1);
