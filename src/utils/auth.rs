@@ -16,7 +16,7 @@ pub trait CanAuthenticate {
     fn authenticate(&self) -> Result<Auth>;
 }
 
-impl<T> CanAuthenticate for HttpRequest<T> {
+impl<AppState> CanAuthenticate for HttpRequest<AppState> {
     fn authenticate(&self) -> Result<Auth> {
         // Check for existing token on authorization header
         let token = match self.headers().get(AUTHORIZATION) {
@@ -37,8 +37,6 @@ impl<T> CanAuthenticate for HttpRequest<T> {
 
         let claims = token.decode_jwt()?.claims;
 
-//        let state: AppState = self.state();
-//
 //        let user = self.state().db.send(FindUserById {
 //            id: claims.id,
 //        }).from_err().wait()?;
