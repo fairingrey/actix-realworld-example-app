@@ -1,4 +1,5 @@
 use actix_web::{http::header::AUTHORIZATION, HttpRequest};
+use futures::future::Future;
 
 use crate::app::AppState;
 use crate::models::{User, FindUserById};
@@ -16,7 +17,7 @@ pub trait CanAuthenticate {
     fn authenticate(&self) -> Result<Auth>;
 }
 
-impl<AppState> CanAuthenticate for HttpRequest<AppState> {
+impl CanAuthenticate for HttpRequest<AppState> {
     fn authenticate(&self) -> Result<Auth> {
         // Check for existing token on authorization header
         let token = match self.headers().get(AUTHORIZATION) {
@@ -37,14 +38,12 @@ impl<AppState> CanAuthenticate for HttpRequest<AppState> {
 
         let claims = token.decode_jwt()?.claims;
 
-//        let user = self.state().db.send(FindUserById {
-//            id: claims.id,
-//        }).from_err().wait()?;
-//
-//        Ok(Auth {
-//            user,
-//        })
+        let user = self.state().db.send(FindUserById {
+            id: claims.id,
+        }).from_err::<Error>().wait()??;
 
-        unimplemented!()
+        Ok(Auth {
+            user,
+        })
     }
 }
