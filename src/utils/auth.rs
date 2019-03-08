@@ -2,7 +2,7 @@ use actix_web::{http::header::AUTHORIZATION, HttpRequest};
 use futures::future::Future;
 
 use crate::app::AppState;
-use crate::models::{User, FindUserById};
+use crate::models::{FindUserById, User};
 use crate::prelude::*;
 use crate::utils::jwt::CanDecodeJwt;
 
@@ -38,12 +38,13 @@ impl CanAuthenticate for HttpRequest<AppState> {
 
         let claims = token.decode_jwt()?.claims;
 
-        let user = self.state().db.send(FindUserById {
-            id: claims.id,
-        }).from_err::<Error>().wait()??;
+        let user = self
+            .state()
+            .db
+            .send(FindUserById { id: claims.id })
+            .from_err::<Error>()
+            .wait()??;
 
-        Ok(Auth {
-            user,
-        })
+        Ok(Auth { user })
     }
 }

@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 
 use crate::db::DbExecutor;
-use crate::models::{NewUser, FindUserById, User, UserChange};
+use crate::models::{FindUserById, NewUser, User, UserChange};
 use crate::prelude::*;
 
 impl Message for NewUser {

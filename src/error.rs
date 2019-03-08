@@ -1,17 +1,9 @@
-use actix_web::{
-    actix::MailboxError,
-    error::ResponseError,
-    http::StatusCode,
-    HttpResponse,
-};
+use actix_web::{actix::MailboxError, error::ResponseError, http::StatusCode, HttpResponse};
 use diesel::{
     r2d2::PoolError,
     result::{DatabaseErrorKind, Error as DieselError},
 };
-use jwt::errors::{
-    Error as JwtError,
-    ErrorKind as JwtErrorKind,
-};
+use jwt::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 use libreauth::pass::ErrorCode as PassErrorCode;
 use std::convert::From;
 use validator::{ValidationError, ValidationErrors};

@@ -11,7 +11,7 @@ impl<S> Middleware<S> for TokenService {
         unimplemented!()
     }
 
-    fn response(&self, req: &HttpRequest<S>, mut resp: HttpResponse) -> Result<Response> {
+    fn response(&self, req: &HttpRequest<S>, resp: HttpResponse) -> Result<Response> {
         Ok(Response::Done(resp))
     }
 }

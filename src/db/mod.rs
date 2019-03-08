@@ -12,7 +12,6 @@ use diesel::{
 
 pub type Conn = PgConnection;
 pub type PgPool = Pool<ConnectionManager<Conn>>;
-pub type PooledConn = PooledConnection<ConnectionManager<Conn>>;
 
 pub struct DbExecutor(pub PgPool);
 
