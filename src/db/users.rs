@@ -43,7 +43,6 @@ impl Handler<SigninUser> for DbExecutor {
     type Result = Result<User, Error>;
 
     fn handle(&mut self, signin_user: SigninUser, _: &mut Self::Context) -> Self::Result {
-        // TODO: this is bugged
         use crate::schema::users::dsl::*;
 
         let provided_password_raw = &signin_user.password;
