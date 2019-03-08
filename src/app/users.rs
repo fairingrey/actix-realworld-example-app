@@ -8,7 +8,7 @@ use validator::Validate;
 use super::AppState;
 use crate::models::User;
 use crate::prelude::*;
-use crate::utils::{hasher, jwt::CanGenerateJwt};
+use crate::utils::{ auth::{Auth /* , authenticate */}, hasher, jwt::CanGenerateJwt};
 
 lazy_static! {
     static ref RE_USERNAME: Regex = Regex::new(r"^[[:alnum:]]+$").unwrap();
@@ -40,7 +40,7 @@ pub struct LoginUser {
 }
 
 #[derive(Debug, Validate, Deserialize)]
-pub struct UserChange {
+pub struct UpdateUser {
     #[validate(email)]
     pub email: Option<String>,
     #[validate(length(min = "1", max = "20"), regex = "RE_USERNAME")]
@@ -83,14 +83,14 @@ impl From<User> for UserResponse {
 }
 
 impl UserResponse {
-    fn create_with_token(token: String, user: User) -> Self {
+    fn create_with_auth(auth: Auth) -> Self {
         UserResponse {
             user: UserResponseInner {
-                token,
-                email: user.email,
-                username: user.username,
-                bio: user.bio,
-                image: user.image,
+                token: auth.token,
+                email: auth.user.email,
+                username: auth.user.username,
+                bio: auth.user.bio,
+                image: auth.user.image,
             },
         }
     }
@@ -129,3 +129,14 @@ pub fn sign_in(
             Err(e) => Ok(e.error_response()),
         })
 }
+
+//pub fn get_current(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
+//    result(req.authenticate())
+//        .and_then(|res| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(res))))
+//}
+
+//pub fn update(
+//    (form, req): (Json<In<UpdateUser>>, HttpRequest<AppState>),
+//) -> impl Future<Item = HttpResponse, Error = Error> {
+//
+//}
