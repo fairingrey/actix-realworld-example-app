@@ -1,6 +1,5 @@
 use actix_web::{HttpRequest, HttpResponse, Json, ResponseError};
 use futures::{future::result, Future};
-use libreauth::pass::ErrorCode as PassErrorCode;
 use regex::Regex;
 use std::convert::From;
 use validator::Validate;
@@ -10,7 +9,6 @@ use crate::models::User;
 use crate::prelude::*;
 use crate::utils::{
     auth::{authenticate, Auth},
-    hasher,
     jwt::CanGenerateJwt,
 };
 
