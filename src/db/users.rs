@@ -55,7 +55,7 @@ impl Handler<LoginUser> for DbExecutor {
         let conn = &self.0.get().expect("Connection couldn't be opened");
 
         let stored_user: User = users.filter(email.eq(msg.email)).first(conn)?;
-        let checker = HashBuilder::from_phc(&stored_user.password).unwrap();
+        let checker = HashBuilder::from_phc(&stored_user.password)?;
 
         if checker.is_valid(provided_password_raw) {
             if checker.needs_update(PWD_SCHEME_VERSION) {

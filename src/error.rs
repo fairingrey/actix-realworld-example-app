@@ -90,7 +90,7 @@ impl From<PoolError> for Error {
 
 impl From<PassErrorCode> for Error {
     fn from(_error: PassErrorCode) -> Self {
-        Error::BadRequest("Invalid password provided.".to_string())
+        Error::InternalServerError
     }
 }
 
