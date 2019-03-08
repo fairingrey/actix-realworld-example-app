@@ -1,6 +1,6 @@
 use actix_web::{
     actix::MailboxError,
-    error::{self, ResponseError},
+    error::ResponseError,
     http::StatusCode,
     HttpResponse,
 };
@@ -8,7 +8,10 @@ use diesel::{
     r2d2::PoolError,
     result::{DatabaseErrorKind, Error as DieselError},
 };
-use jwt::errors::Error as JwtError;
+use jwt::errors::{
+    Error as JwtError,
+    ErrorKind as JwtErrorKind,
+};
 use libreauth::pass::ErrorCode as PassErrorCode;
 use std::convert::From;
 use validator::{ValidationError, ValidationErrors};
@@ -64,7 +67,11 @@ impl From<MailboxError> for Error {
 
 impl From<JwtError> for Error {
     fn from(error: JwtError) -> Self {
-        Error::BadRequest("JSON web token provided is invalid".to_string())
+        match error.kind() {
+            JwtErrorKind::InvalidToken => Error::Unauthorized("Token is invalid".to_string()),
+            JwtErrorKind::InvalidIssuer => Error::Unauthorized("Issuer is invalid".to_string()),
+            _ => Error::Unauthorized("An issue was found with the token provided".to_string()),
+        }
     }
 }
 

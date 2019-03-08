@@ -1,4 +1,3 @@
-use actix::{Actor, SyncContext};
 use libreauth::pass::{Algorithm, HashBuilder, Hasher};
 
 const PWD_ALGORITHM: Algorithm = Algorithm::Argon2;

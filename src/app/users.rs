@@ -1,4 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, Json, Responder, ResponseError};
+use actix_web::{HttpRequest, HttpResponse, Json, ResponseError};
 use futures::{future::result, Future};
 use libreauth::pass::ErrorCode as PassErrorCode;
 use regex::Regex;
@@ -6,7 +6,6 @@ use std::convert::From;
 use validator::Validate;
 
 use super::AppState;
-use crate::db::users::*;
 use crate::models::{NewUser, User};
 use crate::prelude::*;
 use crate::utils::{hasher, jwt::CanEncodeJwt};

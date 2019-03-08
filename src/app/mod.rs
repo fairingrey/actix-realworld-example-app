@@ -4,7 +4,7 @@ use crate::{
 };
 use actix::prelude::{Addr, SyncArbiter};
 use actix_web::{
-    http::{header, Method, StatusCode},
+    http::{header, Method},
     middleware::{cors::Cors, Logger},
     App, HttpRequest,
 };

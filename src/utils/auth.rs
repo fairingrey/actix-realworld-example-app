@@ -1,8 +1,9 @@
-use actix_web::{http::header::AUTHORIZATION, FromRequest, HttpRequest};
+use actix_web::{http::header::AUTHORIZATION, HttpRequest};
 
-use crate::models::User;
+use crate::app::AppState;
+use crate::models::{User, FindUserById};
 use crate::prelude::*;
-use crate::utils::jwt::{CanDecodeJwt, Claims};
+use crate::utils::jwt::CanDecodeJwt;
 
 const TOKEN_PREFIX: &str = "Token ";
 
@@ -12,13 +13,13 @@ pub struct Auth {
 }
 
 pub trait CanAuthenticate {
-    fn authenticate<S>(&self, req: &HttpRequest<S>) -> Result<Auth>;
+    fn authenticate(&self) -> Result<Auth>;
 }
 
-impl<T: CanDecodeJwt> CanAuthenticate for T {
-    fn authenticate<AppState>(&self, req: &HttpRequest<AppState>) -> Result<Auth> {
+impl<T> CanAuthenticate for HttpRequest<T> {
+    fn authenticate(&self) -> Result<Auth> {
         // Check for existing token on authorization header
-        let token = match req.headers().get(AUTHORIZATION) {
+        let token = match self.headers().get(AUTHORIZATION) {
             Some(token) => token.to_str().unwrap(),
             None => {
                 return Err(Error::Unauthorized(
@@ -33,6 +34,18 @@ impl<T: CanDecodeJwt> CanAuthenticate for T {
             ));
         }
         let token = token.replacen(TOKEN_PREFIX, "", 1);
+
+        let claims = token.decode_jwt()?.claims;
+
+//        let state: AppState = self.state();
+//
+//        let user = self.state().db.send(FindUserById {
+//            id: claims.id,
+//        }).from_err().wait()?;
+//
+//        Ok(Auth {
+//            user,
+//        })
 
         unimplemented!()
     }

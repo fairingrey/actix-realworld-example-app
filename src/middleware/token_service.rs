@@ -1,10 +1,8 @@
 use actix_web::{
     error::Result,
     middleware::{Middleware, Response, Started},
-    Error as AWError, HttpRequest, HttpResponse,
+    HttpRequest, HttpResponse,
 };
-
-use crate::prelude::*;
 
 pub struct TokenService;
 
