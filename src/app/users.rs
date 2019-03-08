@@ -8,7 +8,7 @@ use validator::Validate;
 use super::AppState;
 use crate::models::{NewUser, User};
 use crate::prelude::*;
-use crate::utils::{hasher, jwt::CanEncodeJwt};
+use crate::utils::{hasher, jwt::CanGenerateJwt};
 
 lazy_static! {
     static ref RE_USERNAME: Regex = Regex::new(r"^[[:alnum:]]+$").unwrap();

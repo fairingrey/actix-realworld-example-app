@@ -12,11 +12,11 @@ pub struct Claims {
     pub exp: i64,
 }
 
-pub trait CanEncodeJwt {
+pub trait CanGenerateJwt {
     fn generate_jwt(&self) -> Result<String>;
 }
 
-impl CanEncodeJwt for User {
+impl CanGenerateJwt for User {
     fn generate_jwt(&self) -> Result<String> {
         let exp = (Utc::now() + Duration::days(21)).timestamp();
         let claims = Claims { id: self.id, exp };

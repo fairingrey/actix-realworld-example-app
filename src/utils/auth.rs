@@ -8,6 +8,7 @@ use crate::utils::jwt::CanDecodeJwt;
 
 const TOKEN_PREFIX: &str = "Token ";
 
+// expand this as needed
 #[derive(Debug)]
 pub struct Auth {
     pub user: User,

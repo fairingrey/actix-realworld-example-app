@@ -29,7 +29,6 @@ extern crate diesel;
 mod app;
 mod db;
 mod error;
-mod middleware;
 mod models;
 mod prelude;
 mod schema;
