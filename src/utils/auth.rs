@@ -1,9 +1,7 @@
 use actix_web::{http::header::AUTHORIZATION, HttpRequest};
 use futures::{
-    future::{
-        ok, result
-    },
-    Future
+    future::{ok, result},
+    Future,
 };
 use uuid::Uuid;
 
@@ -26,25 +24,34 @@ pub struct CreateAuth {
     pub token: String,
 }
 
-//pub fn authenticate(req: &HttpRequest<AppState>) -> impl Future<Item = Auth, Error = Error> {
-//    result(preprocess_authz_token(req))
-//        .and_then(|token| {
-//            req.state().db.send(CreateAuth { token }).from_err()
-//        })
-//}
+pub fn authenticate(req: &HttpRequest<AppState>) -> impl Future<Item = Auth, Error = Error> {
+    let db = req.state().db.clone();
+
+    result(preprocess_authz_token(req))
+        .and_then(move |token| db.send(CreateAuth { token }).from_err())
+        .and_then(|res| match res {
+            Ok(res) => Ok(res),
+            Err(e) => Err(e),
+        })
+}
 
 fn preprocess_authz_token(req: &HttpRequest<AppState>) -> Result<String> {
     let token = match req.headers().get(AUTHORIZATION) {
         Some(token) => token.to_str().unwrap(),
-        None => return Err(Error::Unauthorized("No authorization header provided".to_string())),
+        None => {
+            return Err(Error::Unauthorized(
+                "No authorization header provided".to_string(),
+            ))
+        }
     };
 
     if !token.starts_with(TOKEN_PREFIX) {
-        return Err(Error::Unauthorized("Invalid authorization field".to_string()))
+        return Err(Error::Unauthorized(
+            "Invalid authorization field".to_string(),
+        ));
     }
 
     let token = token.replacen(TOKEN_PREFIX, "", 1);
 
     Ok(token)
 }
-

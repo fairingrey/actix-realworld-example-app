@@ -6,7 +6,12 @@ use crate::app::users::{LoginUser, RegisterUser};
 use crate::db::DbExecutor;
 use crate::models::{NewUser, User, UserChange};
 use crate::prelude::*;
-use crate::utils::{auth::{Auth, CreateAuth}, hasher, PWD_SCHEME_VERSION, jwt::CanDecodeJwt};
+use crate::utils::{
+    auth::{Auth, CreateAuth},
+    hasher,
+    jwt::CanDecodeJwt,
+    PWD_SCHEME_VERSION,
+};
 
 impl Message for RegisterUser {
     type Result = Result<User, Error>;

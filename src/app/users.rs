@@ -8,7 +8,11 @@ use validator::Validate;
 use super::AppState;
 use crate::models::User;
 use crate::prelude::*;
-use crate::utils::{ auth::{Auth /* , authenticate */}, hasher, jwt::CanGenerateJwt};
+use crate::utils::{
+    auth::{authenticate, Auth},
+    hasher,
+    jwt::CanGenerateJwt,
+};
 
 lazy_static! {
     static ref RE_USERNAME: Regex = Regex::new(r"^[[:alnum:]]+$").unwrap();
@@ -130,10 +134,10 @@ pub fn sign_in(
         })
 }
 
-//pub fn get_current(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
-//    result(req.authenticate())
-//        .and_then(|res| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(res))))
-//}
+pub fn get_current(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
+    authenticate(&req)
+        .and_then(|res| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(res))))
+}
 
 //pub fn update(
 //    (form, req): (Json<In<UpdateUser>>, HttpRequest<AppState>),

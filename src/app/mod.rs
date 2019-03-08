@@ -57,11 +57,11 @@ pub fn create() -> App<AppState> {
                 })
                 .resource("users/login", |r| {
                     r.method(Method::POST).with_async(users::sign_in)
+                })
+                .resource("user", |r| {
+                    r.method(Method::GET).with_async(users::get_current)
+                    //r.method(Method::PUT).with_async(users::update)
                 });
-//                .resource("user", |r| {
-//                    r.method(Method::GET).with_async(users::get_current)
-//                    //r.method(Method::PUT).with_async(users::update)
-//                });
 
             scope
         })
