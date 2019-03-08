@@ -52,10 +52,7 @@ fn main() {
 
     server::new(app::create)
         .bind(&bind_address)
-        .expect(&format!(
-            "Could not bind server to address {}",
-            &bind_address
-        ))
+        .unwrap_or_else(|_| panic!("Could not bind server to address {}", &bind_address))
         .start();
 
     let _ = sys.run();
