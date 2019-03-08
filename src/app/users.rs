@@ -1,5 +1,5 @@
 use actix_web::{HttpRequest, HttpResponse, Json, ResponseError};
-use futures::{future::{result, ok}, Future};
+use futures::{future::result, Future};
 use regex::Regex;
 use std::convert::From;
 use validator::Validate;
