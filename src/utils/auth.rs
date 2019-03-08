@@ -25,10 +25,7 @@ pub fn authenticate(req: &HttpRequest<AppState>) -> impl Future<Item = Auth, Err
 
     result(preprocess_authz_token(req))
         .and_then(move |token| db.send(CreateAuth { token }).from_err())
-        .and_then(|res| match res {
-            Ok(res) => Ok(res),
-            Err(e) => Err(e),
-        })
+        .flatten()
 }
 
 fn preprocess_authz_token(req: &HttpRequest<AppState>) -> Result<String> {
