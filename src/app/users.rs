@@ -31,9 +31,11 @@ pub struct SignupUser {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Validate, Deserialize)]
 pub struct SigninUser {
+    #[validate(email)]
     pub email: String,
+    #[validate(length(min = "8", max = "72"))]
     pub password: String,
 }
 
