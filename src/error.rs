@@ -96,12 +96,12 @@ impl From<PassErrorCode> for Error {
 
 impl From<ValidationError> for Error {
     fn from(_error: ValidationError) -> Self {
-        Error::BadRequest("Validation failed on some constraint.".to_string())
+        Error::BadRequest("Validation failed.".to_string())
     }
 }
 
 impl From<ValidationErrors> for Error {
     fn from(_errors: ValidationErrors) -> Self {
-        Error::BadRequest("Validation failed on some fields.".to_string())
+        Error::BadRequest("Validation failed.".to_string())
     }
 }
