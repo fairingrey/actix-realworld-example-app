@@ -120,10 +120,11 @@ pub fn sign_in(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let signin_user = form.into_inner().user;
 
-    req.state()
-        .db
-        .send(signin_user)
+    let db = req.state().db.clone();
+
+    result(signin_user.validate())
         .from_err()
+        .and_then(move |_| db.send(signin_user).from_err())
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
             Err(e) => Ok(e.error_response()),
