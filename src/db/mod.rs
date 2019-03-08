@@ -1,7 +1,8 @@
-pub mod articles;
-pub mod comments;
-pub mod followers;
-pub mod users;
+mod articles;
+mod auth;
+mod comments;
+mod followers;
+mod users;
 
 use crate::prelude::*;
 use actix::prelude::{Actor, SyncContext};
