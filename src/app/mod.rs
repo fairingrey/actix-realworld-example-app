@@ -53,11 +53,15 @@ pub fn create() -> App<AppState> {
             // Users
             let scope = scope
                 .resource("users", |r| {
-                    r.method(Method::POST).with_async(users::sign_up)
+                    r.method(Method::POST).with_async(users::register)
                 })
                 .resource("users/login", |r| {
                     r.method(Method::POST).with_async(users::sign_in)
                 });
+//                .resource("user", |r| {
+//                    r.method(Method::GET).with_async(users::get_current_user);
+//                    r.method(Method::PUT).with_async(users::update_user)
+//                });
 
             scope
         })

@@ -2,26 +2,26 @@ use actix::prelude::*;
 use diesel::prelude::*;
 use libreauth::pass::HashBuilder;
 
-use crate::app::users::{SigninUser, SignupUser};
+use crate::app::users::{LoginUser, RegisterUser};
 use crate::db::DbExecutor;
 use crate::models::{NewUser, User, UserChange};
 use crate::prelude::*;
 use crate::utils::{auth::FindUserById, hasher, PWD_SCHEME_VERSION};
 
-impl Message for SignupUser {
+impl Message for RegisterUser {
     type Result = Result<User, Error>;
 }
 
-impl Handler<SignupUser> for DbExecutor {
+impl Handler<RegisterUser> for DbExecutor {
     type Result = Result<User, Error>;
 
-    fn handle(&mut self, signup_user: SignupUser, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: RegisterUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
 
         let new_user = NewUser {
-            username: signup_user.username.clone(),
-            email: signup_user.email.clone(),
-            password: hasher().hash(&signup_user.password).unwrap(),
+            username: msg.username.clone(),
+            email: msg.email.clone(),
+            password: hasher().hash(&msg.password).unwrap(),
             bio: None,
             image: None,
         };
@@ -35,21 +35,21 @@ impl Handler<SignupUser> for DbExecutor {
     }
 }
 
-impl Message for SigninUser {
+impl Message for LoginUser {
     type Result = Result<User, Error>;
 }
 
-impl Handler<SigninUser> for DbExecutor {
+impl Handler<LoginUser> for DbExecutor {
     type Result = Result<User, Error>;
 
-    fn handle(&mut self, signin_user: SigninUser, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: LoginUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
 
-        let provided_password_raw = &signin_user.password;
+        let provided_password_raw = &msg.password;
 
         let conn = &self.0.get().expect("Connection couldn't be opened");
 
-        let mut stored_user: User = users.filter(email.eq(signin_user.email)).first(conn)?;
+        let mut stored_user: User = users.filter(email.eq(msg.email)).first(conn)?;
         let checker = HashBuilder::from_phc(&stored_user.password).unwrap();
 
         if checker.is_valid(provided_password_raw) {
@@ -73,12 +73,12 @@ impl Message for FindUserById {
 impl Handler<FindUserById> for DbExecutor {
     type Result = Result<User, Error>;
 
-    fn handle(&mut self, find_user: FindUserById, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: FindUserById, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
 
         let conn = &self.0.get().expect("Connection couldn't be opened");
 
-        match users.find(find_user.id).first(conn) {
+        match users.find(msg.id).first(conn) {
             Ok(user) => Ok(user),
             Err(e) => Err(e.into()),
         }

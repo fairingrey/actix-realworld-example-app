@@ -22,7 +22,7 @@ pub struct In<U> {
 // Client Messages
 
 #[derive(Debug, Validate, Deserialize)]
-pub struct SignupUser {
+pub struct RegisterUser {
     #[validate(length(min = "1", max = "20"), regex = "RE_USERNAME")]
     pub username: String,
     #[validate(email)]
@@ -32,7 +32,7 @@ pub struct SignupUser {
 }
 
 #[derive(Debug, Validate, Deserialize)]
-pub struct SigninUser {
+pub struct LoginUser {
     #[validate(email)]
     pub email: String,
     #[validate(length(min = "8", max = "72"))]
@@ -68,7 +68,6 @@ pub struct UserResponseInner {
     pub image: Option<String>,
 }
 
-// The spec requires the response be in this order
 impl From<User> for UserResponse {
     fn from(user: User) -> Self {
         UserResponse {
@@ -99,16 +98,16 @@ impl UserResponse {
 
 // Route handlers
 
-pub fn sign_up(
-    (form, req): (Json<In<SignupUser>>, HttpRequest<AppState>),
+pub fn register(
+    (form, req): (Json<In<RegisterUser>>, HttpRequest<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let signup_user = form.into_inner().user;
+    let register_user = form.into_inner().user;
 
     let db = req.state().db.clone();
 
-    result(signup_user.validate())
+    result(register_user.validate())
         .from_err()
-        .and_then(move |_| db.send(signup_user).from_err())
+        .and_then(move |_| db.send(register_user).from_err())
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
             Err(e) => Ok(e.error_response()),
@@ -116,15 +115,15 @@ pub fn sign_up(
 }
 
 pub fn sign_in(
-    (form, req): (Json<In<SigninUser>>, HttpRequest<AppState>),
+    (form, req): (Json<In<LoginUser>>, HttpRequest<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let signin_user = form.into_inner().user;
+    let login_user = form.into_inner().user;
 
     let db = req.state().db.clone();
 
-    result(signin_user.validate())
+    result(login_user.validate())
         .from_err()
-        .and_then(move |_| db.send(signin_user).from_err())
+        .and_then(move |_| db.send(login_user).from_err())
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
             Err(e) => Ok(e.error_response()),
