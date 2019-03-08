@@ -21,7 +21,7 @@ pub struct In<U> {
     user: U,
 }
 
-// Client Messages
+// Client Messages ↓
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct RegisterUser {
@@ -60,7 +60,7 @@ pub struct UpdateUserOuter {
     pub update_user: UpdateUser,
 }
 
-// JSON response objects
+// JSON response objects ↓
 
 #[derive(Debug, Serialize)]
 pub struct UserResponse {

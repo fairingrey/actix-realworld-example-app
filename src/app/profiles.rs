@@ -6,7 +6,7 @@ use super::AppState;
 use crate::models::User;
 use crate::prelude::*;
 
-// JSON response objects
+// JSON response objects ↓
 
 #[derive(Debug, Serialize)]
 pub struct ProfileResponse {

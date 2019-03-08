@@ -8,6 +8,8 @@ use crate::utils::{
     jwt::CanDecodeJwt,
 };
 
+// handler implementations ↓
+
 impl Message for CreateAuth {
     type Result = Result<Auth, Error>;
 }

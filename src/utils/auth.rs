@@ -14,7 +14,7 @@ pub struct Auth {
     pub token: String,
 }
 
-// message
+// create auth message
 #[derive(Debug)]
 pub struct CreateAuth {
     pub token: String,
