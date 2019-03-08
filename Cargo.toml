@@ -10,7 +10,7 @@ actix-web = "0.7.18"
 chrono = "0.4.6"
 diesel = { version = "1.4.1", features = ["chrono", "postgres", "r2d2", "uuidv07", "serde_json"] }
 dotenv = "0.13.0"
-env_logger = "0.6.0"
+env_logger = "0.6.1"
 failure = "0.1.5"
 futures = "0.1.25"
 jsonwebtoken = "5.0.1"
