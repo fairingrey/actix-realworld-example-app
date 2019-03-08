@@ -54,15 +54,19 @@ impl Handler<LoginUser> for DbExecutor {
 
         let conn = &self.0.get().expect("Connection couldn't be opened");
 
-        let mut stored_user: User = users.filter(email.eq(msg.email)).first(conn)?;
+        let stored_user: User = users.filter(email.eq(msg.email)).first(conn)?;
         let checker = HashBuilder::from_phc(&stored_user.password).unwrap();
 
         if checker.is_valid(provided_password_raw) {
             if checker.needs_update(PWD_SCHEME_VERSION) {
                 let new_password = hasher().hash(provided_password_raw)?;
-                stored_user = diesel::update(users.find(stored_user.id))
+                return match diesel::update(users.find(stored_user.id))
                     .set(password.eq(new_password))
-                    .get_result(conn)?
+                    .get_result(conn)
+                {
+                    Ok(user) => Ok(user),
+                    Err(e) => Err(e.into()),
+                };
             }
             Ok(stored_user)
         } else {

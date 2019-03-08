@@ -153,9 +153,7 @@ pub fn update(
     result(update_user.validate())
         .from_err()
         .and_then(move |_| authenticate(&req))
-        .and_then(move |auth| {
-                db.send(UpdateUserOuter { auth, update_user }).from_err()
-        })
+        .and_then(move |auth| db.send(UpdateUserOuter { auth, update_user }).from_err())
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
             Err(e) => Ok(e.error_response()),
