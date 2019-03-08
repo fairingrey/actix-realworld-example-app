@@ -52,7 +52,7 @@ impl ResponseError for Error {
 }
 
 impl From<MailboxError> for Error {
-    fn from(error: MailboxError) -> Self {
+    fn from(_error: MailboxError) -> Self {
         Error::InternalServerError
     }
 }
@@ -83,7 +83,7 @@ impl From<DieselError> for Error {
 }
 
 impl From<PoolError> for Error {
-    fn from(error: PoolError) -> Self {
+    fn from(_error: PoolError) -> Self {
         Error::InternalServerError
     }
 }

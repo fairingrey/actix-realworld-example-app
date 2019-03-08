@@ -1,9 +1,5 @@
 use actix_web::{http::header::AUTHORIZATION, HttpRequest};
-use futures::{
-    future::{ok, result},
-    Future,
-};
-use uuid::Uuid;
+use futures::{future::result, Future};
 
 use crate::app::AppState;
 use crate::models::User;
