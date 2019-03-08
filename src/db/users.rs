@@ -2,7 +2,7 @@ use actix::prelude::*;
 use diesel::prelude::*;
 use libreauth::pass::HashBuilder;
 
-use crate::app::users::{LoginUser, RegisterUser};
+use crate::app::users::{LoginUser, RegisterUser, UpdateUserOuter};
 use crate::db::DbExecutor;
 use crate::models::{NewUser, User, UserChange};
 use crate::prelude::*;
@@ -90,6 +90,44 @@ impl Handler<CreateAuth> for DbExecutor {
                 user,
                 token: msg.token,
             }),
+            Err(e) => Err(e.into()),
+        }
+    }
+}
+
+impl Message for UpdateUserOuter {
+    type Result = Result<User, Error>;
+}
+
+impl Handler<UpdateUserOuter> for DbExecutor {
+    type Result = Result<User, Error>;
+
+    fn handle(&mut self, msg: UpdateUserOuter, _: &mut Self::Context) -> Self::Result {
+        use crate::schema::users::dsl::*;
+
+        let auth = msg.auth;
+        let update_user = msg.update_user;
+
+        let conn = &self.0.get().expect("Connection couldn't be opened");
+
+        let updated_password = match update_user.password {
+            Some(updated_password) => Some(hasher().hash(&updated_password)?),
+            None => None,
+        };
+
+        let updated_user = UserChange {
+            username: update_user.username,
+            email: update_user.email,
+            password: updated_password,
+            bio: update_user.bio,
+            image: update_user.image,
+        };
+
+        match diesel::update(users.find(auth.user.id))
+            .set(&updated_user)
+            .get_result(conn)
+        {
+            Ok(user) => Ok(user),
             Err(e) => Err(e.into()),
         }
     }

@@ -43,15 +43,21 @@ pub struct LoginUser {
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct UpdateUser {
-    #[validate(email)]
-    pub email: Option<String>,
     #[validate(length(min = "1", max = "20"), regex = "RE_USERNAME")]
     pub username: Option<String>,
+    #[validate(email)]
+    pub email: Option<String>,
+    #[validate(length(min = "8", max = "72"))]
+    pub password: Option<String>,
     pub bio: Option<String>,
     #[validate(url)]
     pub image: Option<String>,
-    #[validate(length(min = "8", max = "72"))]
-    pub password: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct UpdateUserOuter {
+    pub auth: Auth,
+    pub update_user: UpdateUser,
 }
 
 // JSON response objects
@@ -134,11 +140,23 @@ pub fn login(
 
 pub fn get_current(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
     authenticate(&req)
-        .and_then(|res| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(res))))
+        .and_then(|auth| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth))))
 }
 
-//pub fn update(
-//    (form, req): (Json<In<UpdateUser>>, HttpRequest<AppState>),
-//) -> impl Future<Item = HttpResponse, Error = Error> {
-//
-//}
+pub fn update(
+    (form, req): (Json<In<UpdateUser>>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let update_user = form.into_inner().user;
+
+    authenticate(&req)
+        .and_then(move |auth| {
+            req.state()
+                .db
+                .send(UpdateUserOuter { auth, update_user })
+                .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
+            Err(e) => Ok(e.error_response()),
+        })
+}
