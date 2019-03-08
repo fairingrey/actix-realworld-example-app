@@ -50,8 +50,8 @@ pub fn create() -> App<AppState> {
         })
         .resource("/", |r| r.f(index))
         .scope("/api", |scope| {
-            // Users
             scope
+                // User routes ↓
                 .resource("users", |r| {
                     r.method(Method::POST).with_async(users::register)
                 })
@@ -62,5 +62,8 @@ pub fn create() -> App<AppState> {
                     r.method(Method::GET).with_async(users::get_current);
                     r.method(Method::PUT).with_async(users::update)
                 })
+            // Profile routes ↓
+            // Article routes ↓
+            // Tags routes ↓
         })
 }
