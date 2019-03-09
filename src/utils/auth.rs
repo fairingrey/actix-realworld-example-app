@@ -33,14 +33,14 @@ fn preprocess_authz_token(req: &HttpRequest<AppState>) -> Result<String> {
         Some(token) => token.to_str().unwrap(),
         None => {
             return Err(Error::Unauthorized(
-                "No authorization header provided".to_string(),
+                "No authorization was provided".to_string(),
             ))
         }
     };
 
     if !token.starts_with(TOKEN_PREFIX) {
         return Err(Error::Unauthorized(
-            "Invalid authorization field".to_string(),
+            "Invalid authorization method".to_string(),
         ));
     }
 
