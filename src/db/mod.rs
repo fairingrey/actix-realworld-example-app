@@ -1,7 +1,6 @@
 mod articles;
 mod auth;
 mod comments;
-mod followers;
 mod profiles;
 mod users;
 
