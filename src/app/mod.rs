@@ -62,7 +62,10 @@ pub fn create() -> App<AppState> {
                     r.method(Method::GET).with_async(users::get_current);
                     r.method(Method::PUT).with_async(users::update)
                 })
-            // Profile routes ↓
+                // Profile routes ↓
+                .resource("profiles/{username}", |r| {
+                    r.method(Method::GET).with_async(profiles::get)
+                })
             // Article routes ↓
             // Tags routes ↓
         })

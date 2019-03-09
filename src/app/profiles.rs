@@ -1,8 +1,7 @@
-use actix_web::{HttpRequest, HttpResponse, Json, Path, ResponseError};
-use futures::{future::result, Future};
+use actix_web::{HttpRequest, HttpResponse, Path, ResponseError};
+use futures::Future;
 
 use super::AppState;
-use crate::models::User;
 use crate::prelude::*;
 use crate::utils::auth::{authenticate, Auth};
 
@@ -17,7 +16,8 @@ pub struct ProfilePath {
 
 #[derive(Debug)]
 pub struct GetProfile {
-    pub auth: Auth,
+    // auth is option in case authentication fails or isn't present
+    pub auth: Option<Auth>,
     pub username: String,
 }
 
@@ -30,26 +30,29 @@ pub struct ProfileResponse {
 
 #[derive(Debug, Serialize)]
 pub struct ProfileResponseInner {
-    username: String,
-    bio: Option<String>,
-    image: Option<String>,
-    following: bool,
+    pub username: String,
+    pub bio: Option<String>,
+    pub image: Option<String>,
+    pub following: bool,
 }
 
 // Route handlers ↓
 
-//pub fn get((path, req): (Path<ProfilePath>, HttpRequest<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
-//
-//    let db = req.state().db.clone();
-//
-//    authenticate(&req)
-//        .and_then(move |auth| {
-//            db.send(GetProfile {
-//                auth,
-//                username: path.username,
-//            }).from_err()
-//        })
-//        .and_then(|res| match res {
-//
-//        })
-//}
+pub fn get(
+    (path, req): (Path<ProfilePath>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .then(move |auth| {
+            db.send(GetProfile {
+                auth: auth.ok(),
+                username: path.username.to_owned(),
+            })
+            .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}

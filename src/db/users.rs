@@ -11,11 +11,11 @@ use crate::utils::{hasher, PWD_SCHEME_VERSION};
 // handler implementations ↓
 
 impl Message for RegisterUser {
-    type Result = Result<UserResponse, Error>;
+    type Result = Result<UserResponse>;
 }
 
 impl Handler<RegisterUser> for DbExecutor {
-    type Result = Result<UserResponse, Error>;
+    type Result = Result<UserResponse>;
 
     fn handle(&mut self, msg: RegisterUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
@@ -41,11 +41,11 @@ impl Handler<RegisterUser> for DbExecutor {
 }
 
 impl Message for LoginUser {
-    type Result = Result<UserResponse, Error>;
+    type Result = Result<UserResponse>;
 }
 
 impl Handler<LoginUser> for DbExecutor {
-    type Result = Result<UserResponse, Error>;
+    type Result = Result<UserResponse>;
 
     fn handle(&mut self, msg: LoginUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
@@ -76,11 +76,11 @@ impl Handler<LoginUser> for DbExecutor {
 }
 
 impl Message for UpdateUserOuter {
-    type Result = Result<UserResponse, Error>;
+    type Result = Result<UserResponse>;
 }
 
 impl Handler<UpdateUserOuter> for DbExecutor {
-    type Result = Result<UserResponse, Error>;
+    type Result = Result<UserResponse>;
 
     fn handle(&mut self, msg: UpdateUserOuter, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;

@@ -11,11 +11,11 @@ use crate::utils::{
 // handler implementations ↓
 
 impl Message for CreateAuth {
-    type Result = Result<Auth, Error>;
+    type Result = Result<Auth>;
 }
 
 impl Handler<CreateAuth> for DbExecutor {
-    type Result = Result<Auth, Error>;
+    type Result = Result<Auth>;
 
     fn handle(&mut self, msg: CreateAuth, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
