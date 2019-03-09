@@ -66,6 +66,10 @@ pub fn create() -> App<AppState> {
                 .resource("profiles/{username}", |r| {
                     r.method(Method::GET).with_async(profiles::get)
                 })
+                .resource("profiles/{username}/follow", |r| {
+                    r.method(Method::POST).with_async(profiles::follow);
+                    r.method(Method::DELETE).with_async(profiles::unfollow)
+                })
             // Article routes ↓
             // Tags routes ↓
         })

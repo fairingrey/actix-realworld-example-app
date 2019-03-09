@@ -21,6 +21,18 @@ pub struct GetProfile {
     pub username: String,
 }
 
+#[derive(Debug)]
+pub struct FollowProfile {
+    pub auth: Auth,
+    pub username: String,
+}
+
+#[derive(Debug)]
+pub struct UnfollowProfile {
+    pub auth: Auth,
+    pub username: String,
+}
+
 // JSON response objects ↓
 
 #[derive(Debug, Serialize)]
@@ -47,6 +59,44 @@ pub fn get(
         .then(move |auth| {
             db.send(GetProfile {
                 auth: auth.ok(),
+                username: path.username.to_owned(),
+            })
+            .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn follow(
+    (path, req): (Path<ProfilePath>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .and_then(move |auth| {
+            db.send(FollowProfile {
+                auth,
+                username: path.username.to_owned(),
+            })
+            .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn unfollow(
+    (path, req): (Path<ProfilePath>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .and_then(move |auth| {
+            db.send(UnfollowProfile {
+                auth,
                 username: path.username.to_owned(),
             })
             .from_err()
