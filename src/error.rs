@@ -20,6 +20,10 @@ pub enum Error {
     #[fail(display = "Unauthorized: {}", _0)]
     Unauthorized(String),
 
+    // 403
+    #[fail(display = "Forbidden: {}", _0)]
+    Forbidden(String),
+
     // 422
     #[fail(display = "Unprocessable Entity: {}", _0)]
     UnprocessableEntity(String),
@@ -36,6 +40,7 @@ impl ResponseError for Error {
         match *self {
             Error::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
             Error::Unauthorized(ref message) => HttpResponse::Unauthorized().json(message),
+            Error::Forbidden(ref message) => HttpResponse::Forbidden().json(message),
             Error::UnprocessableEntity(ref message) => {
                 HttpResponse::build(StatusCode::UNPROCESSABLE_ENTITY).json(message)
             }
