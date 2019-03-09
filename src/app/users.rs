@@ -117,7 +117,7 @@ pub fn register(
         .from_err()
         .and_then(move |_| db.send(register_user).from_err())
         .and_then(|res| match res {
-            Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
         })
 }
@@ -133,7 +133,7 @@ pub fn login(
         .from_err()
         .and_then(move |_| db.send(login_user).from_err())
         .and_then(|res| match res {
-            Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
         })
 }
@@ -155,7 +155,7 @@ pub fn update(
         .and_then(move |_| authenticate(&req))
         .and_then(move |auth| db.send(UpdateUserOuter { auth, update_user }).from_err())
         .and_then(|res| match res {
-            Ok(user) => Ok(HttpResponse::Ok().json(UserResponse::from(user))),
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
         })
 }

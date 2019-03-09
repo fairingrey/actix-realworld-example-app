@@ -2,8 +2,8 @@ use actix::prelude::*;
 use diesel::prelude::*;
 use libreauth::pass::HashBuilder;
 
-use crate::app::users::{LoginUser, RegisterUser, UpdateUserOuter};
-use crate::db::DbExecutor;
+use super::DbExecutor;
+use crate::app::users::{LoginUser, RegisterUser, UpdateUserOuter, UserResponse};
 use crate::models::{NewUser, User, UserChange};
 use crate::prelude::*;
 use crate::utils::{hasher, PWD_SCHEME_VERSION};
@@ -11,11 +11,11 @@ use crate::utils::{hasher, PWD_SCHEME_VERSION};
 // handler implementations ↓
 
 impl Message for RegisterUser {
-    type Result = Result<User, Error>;
+    type Result = Result<UserResponse, Error>;
 }
 
 impl Handler<RegisterUser> for DbExecutor {
-    type Result = Result<User, Error>;
+    type Result = Result<UserResponse, Error>;
 
     fn handle(&mut self, msg: RegisterUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
@@ -30,19 +30,22 @@ impl Handler<RegisterUser> for DbExecutor {
 
         let conn = &self.0.get().expect("Connection couldn't be opened");
 
-        match diesel::insert_into(users).values(new_user).get_result(conn) {
-            Ok(user) => Ok(user),
+        match diesel::insert_into(users)
+            .values(new_user)
+            .get_result::<User>(conn)
+        {
+            Ok(user) => Ok(user.into()),
             Err(e) => Err(e.into()),
         }
     }
 }
 
 impl Message for LoginUser {
-    type Result = Result<User, Error>;
+    type Result = Result<UserResponse, Error>;
 }
 
 impl Handler<LoginUser> for DbExecutor {
-    type Result = Result<User, Error>;
+    type Result = Result<UserResponse, Error>;
 
     fn handle(&mut self, msg: LoginUser, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
@@ -59,13 +62,13 @@ impl Handler<LoginUser> for DbExecutor {
                 let new_password = hasher().hash(provided_password_raw)?;
                 return match diesel::update(users.find(stored_user.id))
                     .set(password.eq(new_password))
-                    .get_result(conn)
+                    .get_result::<User>(conn)
                 {
-                    Ok(user) => Ok(user),
+                    Ok(user) => Ok(user.into()),
                     Err(e) => Err(e.into()),
                 };
             }
-            Ok(stored_user)
+            Ok(stored_user.into())
         } else {
             Err(Error::Unauthorized("Wrong password".to_string()))
         }
@@ -73,11 +76,11 @@ impl Handler<LoginUser> for DbExecutor {
 }
 
 impl Message for UpdateUserOuter {
-    type Result = Result<User, Error>;
+    type Result = Result<UserResponse, Error>;
 }
 
 impl Handler<UpdateUserOuter> for DbExecutor {
-    type Result = Result<User, Error>;
+    type Result = Result<UserResponse, Error>;
 
     fn handle(&mut self, msg: UpdateUserOuter, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
@@ -102,9 +105,9 @@ impl Handler<UpdateUserOuter> for DbExecutor {
 
         match diesel::update(users.find(auth.user.id))
             .set(&updated_user)
-            .get_result(conn)
+            .get_result::<User>(conn)
         {
-            Ok(user) => Ok(user),
+            Ok(user) => Ok(user.into()),
             Err(e) => Err(e.into()),
         }
     }

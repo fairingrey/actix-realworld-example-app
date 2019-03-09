@@ -1,16 +1,24 @@
-use actix_web::{HttpRequest, HttpResponse, Json, ResponseError};
+use actix_web::{HttpRequest, HttpResponse, Json, Path, ResponseError};
 use futures::{future::result, Future};
-use std::convert::From;
 
 use super::AppState;
 use crate::models::User;
 use crate::prelude::*;
+use crate::utils::auth::{authenticate, Auth};
 
-// Client Messages ↓
+// Extractors ↓
 
 #[derive(Debug, Deserialize)]
 pub struct ProfilePath {
     username: String,
+}
+
+// Client Messages ↓
+
+#[derive(Debug)]
+pub struct GetProfile {
+    pub auth: Auth,
+    pub username: String,
 }
 
 // JSON response objects ↓
@@ -30,6 +38,18 @@ pub struct ProfileResponseInner {
 
 // Route handlers ↓
 
-//pub fn get(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
-//    unimplemented!()
+//pub fn get((path, req): (Path<ProfilePath>, HttpRequest<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
+//
+//    let db = req.state().db.clone();
+//
+//    authenticate(&req)
+//        .and_then(move |auth| {
+//            db.send(GetProfile {
+//                auth,
+//                username: path.username,
+//            }).from_err()
+//        })
+//        .and_then(|res| match res {
+//
+//        })
 //}
