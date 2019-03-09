@@ -6,6 +6,13 @@ use super::AppState;
 use crate::models::User;
 use crate::prelude::*;
 
+// Client Messages ↓
+
+#[derive(Debug, Deserialize)]
+pub struct ProfilePath {
+    username: String,
+}
+
 // JSON response objects ↓
 
 #[derive(Debug, Serialize)]
@@ -20,3 +27,9 @@ pub struct ProfileResponseInner {
     image: Option<String>,
     following: bool,
 }
+
+// Route handlers ↓
+
+//pub fn get(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
+//    unimplemented!()
+//}

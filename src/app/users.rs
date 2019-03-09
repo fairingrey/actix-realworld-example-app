@@ -104,7 +104,7 @@ impl UserResponse {
     }
 }
 
-// Route handlers
+// Route handlers ↓
 
 pub fn register(
     (form, req): (Json<In<RegisterUser>>, HttpRequest<AppState>),
