@@ -1,5 +1,3 @@
-mod comments;
-
 use actix::prelude::*;
 use diesel::prelude::*;
 use slug::slugify;
