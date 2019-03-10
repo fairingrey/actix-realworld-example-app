@@ -4,7 +4,8 @@ use slug::slugify;
 
 use super::DbExecutor;
 use crate::app::articles::{
-    ArticleResponse, ArticleResponseInner, CreateArticleOuter, UpdateArticle,
+    ArticleListResponse, ArticleResponse, ArticleResponseInner, CreateArticleOuter, GetArticles,
+    UpdateArticle,
 };
 use crate::app::profiles::ProfileResponseInner;
 use crate::models::{
@@ -72,6 +73,18 @@ impl Handler<CreateArticleOuter> for DbExecutor {
                 },
             },
         })
+    }
+}
+
+impl Message for GetArticles {
+    type Result = Result<ArticleListResponse>;
+}
+
+impl Handler<GetArticles> for DbExecutor {
+    type Result = Result<ArticleListResponse>;
+
+    fn handle(&mut self, msg: GetArticles, _: &mut Self::Context) -> Self::Result {
+        unimplemented!()
     }
 }
 

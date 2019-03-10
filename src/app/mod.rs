@@ -72,31 +72,29 @@ pub fn create() -> App<AppState> {
                 })
                 // Article routes ↓
                 .resource("articles", |r| {
-                    //r.method(Method::GET).with_async(articles::list);
+                    r.method(Method::GET).with_async(articles::list);
                     r.method(Method::POST).with_async(articles::create)
                 })
-            /*.resource("articles/feed", |r| {
-                r.method(Method::GET).with_async(articles::feed)
-            })
-            .resource("articles/{slug}", |r| {
-                r.method(Method::GET).with_async(articles::get);
-                r.method(Method::PUT).with_async(articles::update);
-                r.method(Method::DELETE).with_async(articles::delete)
-            })
-            .resource("articles/{slug}/favorite", |r| {
-                r.method(Method::POST).with_async(articles::favorite);
-                r.method(Method::DELETE).with_async(articles::unfavorite)
-            })
-            .resource("articles/{slug}/comments", |r| {
-                r.method(Method::GET).with_async(articles::comments::list);
-                r.method(Method::POST).with_async(articles::comments::add)
-            })
-            .resource("articles/{slug}/comments/{id}", |r| {
-                r.delete().with_async(articles::comments::delete)
-            })*/
-            // Tags routes ↓
-            /*.resource("tags", |r| {
-                r.method(Method::GET).with_async(tags::list)
-            })*/
+            //                .resource("articles/feed", |r| {
+            //                    r.method(Method::GET).with_async(articles::feed)
+            //                })
+            //                .resource("articles/{slug}", |r| {
+            //                    r.method(Method::GET).with_async(articles::get);
+            //                    r.method(Method::PUT).with_async(articles::update);
+            //                    r.method(Method::DELETE).with_async(articles::delete)
+            //                })
+            //                .resource("articles/{slug}/favorite", |r| {
+            //                    r.method(Method::POST).with_async(articles::favorite);
+            //                    r.method(Method::DELETE).with_async(articles::unfavorite)
+            //                })
+            //                .resource("articles/{slug}/comments", |r| {
+            //                    r.method(Method::GET).with_async(articles::comments::list);
+            //                    r.method(Method::POST).with_async(articles::comments::add)
+            //                })
+            //                .resource("articles/{slug}/comments/{id}", |r| {
+            //                    r.delete().with_async(articles::comments::delete)
+            //                })
+            //                // Tags routes ↓
+            //                .resource("tags", |r| r.method(Method::GET).with_async(tags::list))
         })
 }

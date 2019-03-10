@@ -1,29 +1,16 @@
-extern crate dotenv;
-extern crate env_logger;
 #[macro_use]
 extern crate failure;
-extern crate log;
 
-extern crate actix;
-extern crate actix_web;
-extern crate serde;
 #[macro_use]
-extern crate serde_derive;
+extern crate diesel;
 extern crate jsonwebtoken as jwt;
 #[macro_use]
 extern crate lazy_static;
-extern crate libreauth;
-extern crate rand;
-extern crate regex;
-extern crate serde_json;
-extern crate slug;
-extern crate validator;
+#[macro_use]
+extern crate serde_derive;
+
 #[macro_use]
 extern crate validator_derive;
-
-extern crate chrono;
-#[macro_use]
-extern crate diesel;
 
 mod app;
 mod db;
