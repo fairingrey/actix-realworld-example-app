@@ -18,6 +18,7 @@ pub struct Article {
 #[derive(Debug, Insertable)]
 #[table_name = "articles"]
 pub struct NewArticle {
+    pub id: Uuid,
     pub author_id: Uuid,
     pub slug: String,
     pub title: String,

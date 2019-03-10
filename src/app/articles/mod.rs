@@ -94,13 +94,7 @@ pub fn create(
     result(article.validate())
         .from_err()
         .and_then(move |_| authenticate(&req))
-        .and_then(move |auth| {
-            db.send(CreateArticleOuter {
-                auth,
-                article,
-            })
-            .from_err()
-        })
+        .and_then(move |auth| db.send(CreateArticleOuter { auth, article }).from_err())
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),

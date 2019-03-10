@@ -8,11 +8,12 @@ use crate::prelude::*;
 use actix::prelude::{Actor, SyncContext};
 use diesel::{
     pg::PgConnection,
-    r2d2::{self, ConnectionManager, Pool},
+    r2d2::{self, ConnectionManager, Pool, PooledConnection},
 };
 
 pub type Conn = PgConnection;
 pub type PgPool = Pool<ConnectionManager<Conn>>;
+pub type PooledConn = PooledConnection<ConnectionManager<PgConnection>>;
 
 pub struct DbExecutor(pub PgPool);
 
