@@ -1,14 +1,12 @@
 #[macro_use]
-extern crate failure;
-
-#[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate failure;
 extern crate jsonwebtoken as jwt;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
-
 #[macro_use]
 extern crate validator_derive;
 
@@ -35,12 +33,12 @@ fn main() {
 
     let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS is not set");
 
-    println!("You can access the server at {}", bind_address);
-
     server::new(app::create)
         .bind(&bind_address)
         .unwrap_or_else(|_| panic!("Could not bind server to address {}", &bind_address))
         .start();
+
+    println!("You can access the server at {}", bind_address);
 
     let _ = sys.run();
 }
