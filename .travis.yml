@@ -3,4 +3,3 @@ rust:
   - nightly
 script:
   - cargo check --verbose --all
-  - cargo build --verbose --all

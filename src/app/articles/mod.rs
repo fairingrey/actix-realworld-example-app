@@ -1,6 +1,6 @@
 pub mod comments;
 
-use actix_web::{HttpRequest, HttpResponse, Json, ResponseError};
+use actix_web::{HttpRequest, HttpResponse, Json, ResponseError, Path};
 use futures::{future::result, Future};
 use validator::Validate;
 
@@ -18,6 +18,11 @@ pub struct In<T> {
 }
 
 // Extractors ↓
+
+#[derive(Debug, Deserialize)]
+pub struct ArticlePath {
+    slug: String,
+}
 
 // Client Messages ↓
 
@@ -38,18 +43,41 @@ pub struct CreateArticleOuter {
 }
 
 #[derive(Debug)]
-pub struct GetArticles {
-    // auth is option in case authentication fails or isn't present
+pub struct GetArticle {
     pub auth: Option<Auth>,
+    pub slug: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
+pub struct GetFeed {
+    pub auth: Auth,
+}
+
+#[derive(Debug, Validate, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateArticle {
+    #[validate(length(min = "1"))]
     pub title: Option<String>,
     pub description: Option<String>,
     pub body: Option<String>,
     pub tag_list: Option<Vec<String>>,
+}
+
+#[derive(Debug)]
+pub struct UpdateArticleOuter {
+    pub auth: Auth,
+    pub article: UpdateArticle,
+}
+
+#[derive(Debug)]
+pub struct DeleteArticle {
+    pub auth: Auth,
+    pub slug: String,
+}
+
+#[derive(Debug)]
+pub struct GetArticles {
+    pub auth: Option<Auth>,
 }
 
 // JSON response objects ↓
@@ -93,6 +121,67 @@ pub fn create(
         .from_err()
         .and_then(move |_| authenticate(&req))
         .and_then(move |auth| db.send(CreateArticleOuter { auth, article }).from_err())
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn get(
+    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .then(move |auth| db.send(GetArticle {
+            auth: auth.ok(),
+            slug: path.slug.to_owned(),
+        }).from_err())
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn feed(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .and_then(move |auth| db.send(GetFeed { auth }).from_err())
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn update(
+    (form, req): (Json<In<UpdateArticle>>, HttpRequest<AppState>)
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let article = form.into_inner().article;
+
+    let db = req.state().db.clone();
+
+    result(article.validate())
+        .from_err()
+        .and_then(move |_| authenticate(&req))
+        .and_then(move |auth| db.send(UpdateArticleOuter {
+            auth,
+            article,
+        }).from_err())
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn delete(
+    (path, req): (Path<ArticlePath>, HttpRequest<AppState>)
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    authenticate(&req)
+        .and_then(move |auth| req.state().db.send(DeleteArticle {
+            auth,
+            slug: path.slug.to_owned(),
+        }).from_err())
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),

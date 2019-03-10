@@ -4,20 +4,20 @@ use diesel::prelude::*;
 use crate::db::DbExecutor;
 use crate::prelude::*;
 use crate::utils::{
-    auth::{Auth, CreateAuth},
+    auth::{Auth, GenerateAuth},
     jwt::CanDecodeJwt,
 };
 
-// handler implementations ↓
+// message handler implementations ↓
 
-impl Message for CreateAuth {
+impl Message for GenerateAuth {
     type Result = Result<Auth>;
 }
 
-impl Handler<CreateAuth> for DbExecutor {
+impl Handler<GenerateAuth> for DbExecutor {
     type Result = Result<Auth>;
 
-    fn handle(&mut self, msg: CreateAuth, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: GenerateAuth, _: &mut Self::Context) -> Self::Result {
         use crate::schema::users::dsl::*;
 
         let claims = msg.token.decode_jwt()?.claims;

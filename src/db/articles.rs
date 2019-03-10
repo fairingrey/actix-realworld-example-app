@@ -6,8 +6,8 @@ use uuid::Uuid;
 
 use super::{DbExecutor, PooledConn};
 use crate::app::articles::{
-    ArticleListResponse, ArticleResponse, ArticleResponseInner, CreateArticleOuter, GetArticles,
-    UpdateArticle,
+    ArticleListResponse, ArticleResponse, ArticleResponseInner, CreateArticleOuter, GetArticle, GetArticles, GetFeed,
+    UpdateArticleOuter, DeleteArticle,
 };
 use crate::app::profiles::ProfileResponseInner;
 use crate::models::{
@@ -16,7 +16,7 @@ use crate::models::{
 use crate::prelude::*;
 use crate::utils::custom_type::CustomDateTime;
 
-// handler implementations ↓
+// message handler implementations ↓
 
 impl Message for CreateArticleOuter {
     type Result = Result<ArticleResponse>;
@@ -81,16 +81,52 @@ impl Handler<CreateArticleOuter> for DbExecutor {
     }
 }
 
-fn add_tag(article_id: Uuid, tag_name: &str, conn: &PooledConn) -> Result<ArticleTag> {
-    use crate::schema::article_tags;
+impl Message for GetArticle {
+    type Result = Result<ArticleResponse>;
+}
 
-    diesel::insert_into(article_tags::table)
-        .values(NewArticleTag {
-            article_id,
-            tag_name: tag_name.to_owned(),
-        })
-        .get_result::<ArticleTag>(conn)
-        .map_err(std::convert::Into::into)
+impl Handler<GetArticle> for DbExecutor {
+    type Result = Result<ArticleResponse>;
+
+    fn handle(&mut self, msg: GetArticle, _: &mut Self::Context) -> Self::Result {
+        unimplemented!()
+    }
+}
+
+impl Message for GetFeed {
+    type Result = Result<ArticleListResponse>;
+}
+
+impl Handler<GetFeed> for DbExecutor {
+    type Result = Result<ArticleListResponse>;
+
+    fn handle(&mut self, msg: GetFeed, _: &mut Self::Context) -> Self::Result {
+        unimplemented!()
+    }
+}
+
+impl Message for UpdateArticleOuter {
+    type Result = Result<ArticleResponse>;
+}
+
+impl Handler<UpdateArticleOuter> for DbExecutor {
+    type Result = Result<ArticleResponse>;
+
+    fn handle(&mut self, msg: UpdateArticleOuter, _: &mut Self::Context) -> Self::Result {
+        unimplemented!()
+    }
+}
+
+impl Message for DeleteArticle {
+    type Result = Result<ArticleResponse>;
+}
+
+impl Handler<DeleteArticle> for DbExecutor {
+    type Result = Result<ArticleResponse>;
+
+    fn handle(&mut self, msg: DeleteArticle, _: &mut Self::Context) -> Self::Result {
+        unimplemented!()
+    }
 }
 
 impl Message for GetArticles {
@@ -105,6 +141,14 @@ impl Handler<GetArticles> for DbExecutor {
     }
 }
 
-impl Message for UpdateArticle {
-    type Result = Result<ArticleResponse>;
+fn add_tag(article_id: Uuid, tag_name: &str, conn: &PooledConn) -> Result<ArticleTag> {
+    use crate::schema::article_tags;
+
+    diesel::insert_into(article_tags::table)
+        .values(NewArticleTag {
+            article_id,
+            tag_name: tag_name.to_owned(),
+        })
+        .get_result::<ArticleTag>(conn)
+        .map_err(std::convert::Into::into) // <- clippy doesn't like it when I write this as |e| e.into() so...
 }

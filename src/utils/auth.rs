@@ -16,7 +16,7 @@ pub struct Auth {
 
 // create auth message
 #[derive(Debug)]
-pub struct CreateAuth {
+pub struct GenerateAuth {
     pub token: String,
 }
 
@@ -24,7 +24,7 @@ pub fn authenticate(req: &HttpRequest<AppState>) -> impl Future<Item = Auth, Err
     let db = req.state().db.clone();
 
     result(preprocess_authz_token(req))
-        .and_then(move |token| db.send(CreateAuth { token }).from_err())
+        .and_then(move |token| db.send(GenerateAuth { token }).from_err())
         .flatten()
 }
 

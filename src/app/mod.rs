@@ -75,14 +75,14 @@ pub fn create() -> App<AppState> {
                     r.method(Method::GET).with_async(articles::list);
                     r.method(Method::POST).with_async(articles::create)
                 })
-            //                .resource("articles/feed", |r| {
-            //                    r.method(Method::GET).with_async(articles::feed)
-            //                })
-            //                .resource("articles/{slug}", |r| {
-            //                    r.method(Method::GET).with_async(articles::get);
-            //                    r.method(Method::PUT).with_async(articles::update);
-            //                    r.method(Method::DELETE).with_async(articles::delete)
-            //                })
+                .resource("articles/feed", |r| {
+                    r.method(Method::GET).with_async(articles::feed)
+                })
+                .resource("articles/{slug}", |r| {
+                    r.method(Method::GET).with_async(articles::get);
+                    r.method(Method::PUT).with_async(articles::update);
+                    r.method(Method::DELETE).with_async(articles::delete)
+                })
             //                .resource("articles/{slug}/favorite", |r| {
             //                    r.method(Method::POST).with_async(articles::favorite);
             //                    r.method(Method::DELETE).with_async(articles::unfavorite)

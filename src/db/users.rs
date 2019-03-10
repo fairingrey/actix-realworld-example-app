@@ -8,7 +8,7 @@ use crate::models::{NewUser, User, UserChange};
 use crate::prelude::*;
 use crate::utils::{hasher, PWD_SCHEME_VERSION};
 
-// handler implementations ↓
+// message handler implementations ↓
 
 impl Message for RegisterUser {
     type Result = Result<UserResponse>;

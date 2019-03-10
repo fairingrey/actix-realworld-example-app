@@ -8,7 +8,7 @@ use crate::app::profiles::{
 use crate::models::{Follower, NewFollower, User};
 use crate::prelude::*;
 
-// handler implementations ↓
+// message handler implementations ↓
 
 impl Message for GetProfile {
     type Result = Result<ProfileResponse>;
