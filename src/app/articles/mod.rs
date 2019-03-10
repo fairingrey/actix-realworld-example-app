@@ -26,9 +26,7 @@ pub struct In<T> {
 pub struct CreateArticle {
     #[validate(length(min = "1"))]
     pub title: String,
-    #[validate(length(min = "1"))]
     pub description: String,
-    #[validate(length(min = "1"))]
     pub body: String,
     pub tag_list: Vec<String>,
 }

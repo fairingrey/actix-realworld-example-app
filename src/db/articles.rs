@@ -33,12 +33,16 @@ impl Handler<CreateArticleOuter> for DbExecutor {
         let author = msg.auth.user;
 
         // Generating the Uuid here since it will help make a unique slug
-        // This is for when some articles have the same slug.
-        let article_id = Uuid::new_v4();
-        let slug = format!("{}-{}", to_blob(&article_id), slugify(&msg.article.title));
+        // This is for when some articles may have similar titles such that they generate the same slug
+        let new_article_id = Uuid::new_v4();
+        let slug = format!(
+            "{}-{}",
+            to_blob(&new_article_id),
+            slugify(&msg.article.title)
+        );
 
         let new_article = NewArticle {
-            id: article_id,
+            id: new_article_id,
             author_id: author.id,
             slug,
             title: msg.article.title,
@@ -52,7 +56,7 @@ impl Handler<CreateArticleOuter> for DbExecutor {
         let tag_list = msg.article.tag_list;
 
         for tag in tag_list.iter() {
-            add_tag(article_id, tag, conn)?;
+            add_tag(article.id, tag, conn)?;
         }
 
         Ok(ArticleResponse {
@@ -86,7 +90,7 @@ fn add_tag(article_id: Uuid, tag_name: &str, conn: &PooledConn) -> Result<Articl
             tag_name: tag_name.to_owned(),
         })
         .get_result::<ArticleTag>(conn)
-        .map_err(|e| e.into())
+        .map_err(std::convert::Into::into)
 }
 
 impl Message for GetArticles {
