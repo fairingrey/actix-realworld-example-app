@@ -35,8 +35,8 @@ pub struct ArticlesParams {
 
 #[derive(Debug, Deserialize)]
 pub struct FeedParams {
-    limit: Option<u32>,
-    offset: Option<u32>,
+    limit: Option<usize>,
+    offset: Option<usize>,
 }
 
 // Client Messages ↓
