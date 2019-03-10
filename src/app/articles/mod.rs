@@ -1,6 +1,6 @@
 pub mod comments;
 
-use actix_web::{HttpRequest, HttpResponse, Json, ResponseError, Path};
+use actix_web::{HttpRequest, HttpResponse, Json, Path, ResponseError};
 use futures::{future::result, Future};
 use validator::Validate;
 
@@ -133,10 +133,13 @@ pub fn get(
     let db = req.state().db.clone();
 
     authenticate(&req)
-        .then(move |auth| db.send(GetArticle {
-            auth: auth.ok(),
-            slug: path.slug.to_owned(),
-        }).from_err())
+        .then(move |auth| {
+            db.send(GetArticle {
+                auth: auth.ok(),
+                slug: path.slug.to_owned(),
+            })
+            .from_err()
+        })
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
@@ -155,7 +158,7 @@ pub fn feed(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Erro
 }
 
 pub fn update(
-    (form, req): (Json<In<UpdateArticle>>, HttpRequest<AppState>)
+    (form, req): (Json<In<UpdateArticle>>, HttpRequest<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let article = form.into_inner().article;
 
@@ -164,10 +167,7 @@ pub fn update(
     result(article.validate())
         .from_err()
         .and_then(move |_| authenticate(&req))
-        .and_then(move |auth| db.send(UpdateArticleOuter {
-            auth,
-            article,
-        }).from_err())
+        .and_then(move |auth| db.send(UpdateArticleOuter { auth, article }).from_err())
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
@@ -175,13 +175,18 @@ pub fn update(
 }
 
 pub fn delete(
-    (path, req): (Path<ArticlePath>, HttpRequest<AppState>)
+    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     authenticate(&req)
-        .and_then(move |auth| req.state().db.send(DeleteArticle {
-            auth,
-            slug: path.slug.to_owned(),
-        }).from_err())
+        .and_then(move |auth| {
+            req.state()
+                .db
+                .send(DeleteArticle {
+                    auth,
+                    slug: path.slug.to_owned(),
+                })
+                .from_err()
+        })
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),

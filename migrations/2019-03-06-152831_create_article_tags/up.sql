@@ -1,5 +1,3 @@
--- Your SQL goes here
-
 CREATE TABLE article_tags (
     article_id UUID NOT NULL REFERENCES articles (id),
     tag_name TEXT NOT NULL,

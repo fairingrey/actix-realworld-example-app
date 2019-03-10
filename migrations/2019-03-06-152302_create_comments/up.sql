@@ -1,4 +1,3 @@
--- Your SQL goes here
 CREATE TABLE comments (
     id SERIAL PRIMARY KEY,
     article_id UUID NOT NULL REFERENCES articles (id),

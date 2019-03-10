@@ -1,4 +1,3 @@
--- Your SQL goes here
 CREATE TABLE articles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     author_id UUID NOT NULL REFERENCES users (id),
@@ -11,7 +10,7 @@ CREATE TABLE articles (
 );
 
 CREATE INDEX articles_author_id_idx ON articles (author_id);
--- No index needed for slugs, as slugs are guaranteed to be unique as per the spec
+-- indices are already created for slugs, as slugs are unique as per the spec
 
 SELECT diesel_manage_updated_at('articles');
 

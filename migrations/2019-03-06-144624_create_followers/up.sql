@@ -1,4 +1,3 @@
--- Your SQL goes here
 CREATE TABLE followers (
     user_id UUID NOT NULL REFERENCES users (id),
     follower_id UUID NOT NULL REFERENCES users (id),

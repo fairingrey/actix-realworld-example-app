@@ -6,8 +6,8 @@ use uuid::Uuid;
 
 use super::{DbExecutor, PooledConn};
 use crate::app::articles::{
-    ArticleListResponse, ArticleResponse, ArticleResponseInner, CreateArticleOuter, GetArticle, GetArticles, GetFeed,
-    UpdateArticleOuter, DeleteArticle,
+    ArticleListResponse, ArticleResponse, ArticleResponseInner, CreateArticleOuter, DeleteArticle,
+    GetArticle, GetArticles, GetFeed, UpdateArticleOuter,
 };
 use crate::app::profiles::ProfileResponseInner;
 use crate::models::{
