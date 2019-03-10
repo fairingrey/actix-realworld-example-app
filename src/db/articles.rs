@@ -93,18 +93,6 @@ impl Handler<GetArticle> for DbExecutor {
     }
 }
 
-impl Message for GetFeed {
-    type Result = Result<ArticleListResponse>;
-}
-
-impl Handler<GetFeed> for DbExecutor {
-    type Result = Result<ArticleListResponse>;
-
-    fn handle(&mut self, msg: GetFeed, _: &mut Self::Context) -> Self::Result {
-        unimplemented!()
-    }
-}
-
 impl Message for UpdateArticleOuter {
     type Result = Result<ArticleResponse>;
 }
@@ -118,11 +106,11 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
 }
 
 impl Message for DeleteArticle {
-    type Result = Result<ArticleResponse>;
+    type Result = Result<()>;
 }
 
 impl Handler<DeleteArticle> for DbExecutor {
-    type Result = Result<ArticleResponse>;
+    type Result = Result<()>;
 
     fn handle(&mut self, msg: DeleteArticle, _: &mut Self::Context) -> Self::Result {
         unimplemented!()
@@ -137,6 +125,18 @@ impl Handler<GetArticles> for DbExecutor {
     type Result = Result<ArticleListResponse>;
 
     fn handle(&mut self, msg: GetArticles, _: &mut Self::Context) -> Self::Result {
+        unimplemented!()
+    }
+}
+
+impl Message for GetFeed {
+    type Result = Result<ArticleListResponse>;
+}
+
+impl Handler<GetFeed> for DbExecutor {
+    type Result = Result<ArticleListResponse>;
+
+    fn handle(&mut self, msg: GetFeed, _: &mut Self::Context) -> Self::Result {
         unimplemented!()
     }
 }

@@ -1,6 +1,6 @@
 pub mod comments;
 
-use actix_web::{HttpRequest, HttpResponse, Json, Path, ResponseError};
+use actix_web::{HttpRequest, HttpResponse, Json, Path, Query, ResponseError};
 use futures::{future::result, Future};
 use validator::Validate;
 
@@ -22,6 +22,21 @@ pub struct In<T> {
 #[derive(Debug, Deserialize)]
 pub struct ArticlePath {
     slug: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ArticlesParams {
+    tag: Option<String>,
+    author: Option<String>,
+    favorited: Option<String>,
+    limit: Option<usize>,
+    offset: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FeedParams {
+    limit: Option<u32>,
+    offset: Option<u32>,
 }
 
 // Client Messages ↓
@@ -46,11 +61,6 @@ pub struct CreateArticleOuter {
 pub struct GetArticle {
     pub auth: Option<Auth>,
     pub slug: String,
-}
-
-#[derive(Debug)]
-pub struct GetFeed {
-    pub auth: Auth,
 }
 
 #[derive(Debug, Validate, Deserialize)]
@@ -78,6 +88,13 @@ pub struct DeleteArticle {
 #[derive(Debug)]
 pub struct GetArticles {
     pub auth: Option<Auth>,
+    pub params: ArticlesParams,
+}
+
+#[derive(Debug)]
+pub struct GetFeed {
+    pub auth: Auth,
+    pub params: FeedParams,
 }
 
 // JSON response objects ↓
@@ -146,17 +163,6 @@ pub fn get(
         })
 }
 
-pub fn feed(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
-
-    authenticate(&req)
-        .and_then(move |auth| db.send(GetFeed { auth }).from_err())
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
-}
-
 pub fn update(
     (form, req): (Json<In<UpdateArticle>>, HttpRequest<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -188,16 +194,43 @@ pub fn delete(
                 .from_err()
         })
         .and_then(|res| match res {
+            Ok(_) => Ok(HttpResponse::Ok().json(())),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn list(
+    (req, params): (HttpRequest<AppState>, Query<ArticlesParams>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .then(move |auth| {
+            db.send(GetArticles {
+                auth: auth.ok(),
+                params: params.into_inner(),
+            })
+            .from_err()
+        })
+        .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
         })
 }
 
-pub fn list(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
+pub fn feed(
+    (req, params): (HttpRequest<AppState>, Query<FeedParams>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
     let db = req.state().db.clone();
 
     authenticate(&req)
-        .then(move |auth| db.send(GetArticles { auth: auth.ok() }).from_err())
+        .and_then(move |auth| {
+            db.send(GetFeed {
+                auth,
+                params: params.into_inner(),
+            })
+            .from_err()
+        })
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
