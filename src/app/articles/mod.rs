@@ -25,16 +25,16 @@ pub struct In<T> {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateArticle {
-    title: String,
-    description: String,
-    body: String,
-    tag_list: Vec<String>,
+    pub title: String,
+    pub description: String,
+    pub body: String,
+    pub tag_list: Vec<String>,
 }
 
 #[derive(Debug)]
 pub struct CreateArticleOuter {
-    auth: Auth,
-    new_article: CreateArticle,
+    pub auth: Auth,
+    pub article: CreateArticle,
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,21 +70,21 @@ pub struct ArticleResponseInner {
 
 // Route handlers ↓
 
-//pub fn create(
-//    (form, req): (Json<In<CreateArticle>>, HttpRequest<AppState>),
-//) -> impl Future<Item = HttpResponse, Error = Error> {
-//    let db = req.state().db.clone();
-//
-//    authenticate(&req)
-//        .and_then(move |auth| {
-//            db.send(CreateArticleOuter {
-//                auth,
-//                new_article: form.into_inner().article,
-//            })
-//            .from_err()
-//        })
-//        .and_then(|res| match res {
-//            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-//            Err(e) => Ok(e.error_response()),
-//        })
-//}
+pub fn create(
+    (form, req): (Json<In<CreateArticle>>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .and_then(move |auth| {
+            db.send(CreateArticleOuter {
+                auth,
+                article: form.into_inner().article,
+            })
+            .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}

@@ -3,7 +3,8 @@ use uuid::Uuid;
 
 use crate::schema::followers;
 
-#[derive(Debug, Queryable)]
+#[derive(Debug, Queryable, Identifiable)]
+#[primary_key(user_id, follower_id)]
 pub struct Follower {
     pub user_id: Uuid,
     pub follower_id: Uuid,

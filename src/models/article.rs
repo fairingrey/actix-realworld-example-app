@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::schema::{articles, favorite_articles};
 
-#[derive(Debug, Queryable)]
+#[derive(Debug, Queryable, Identifiable)]
 pub struct Article {
     pub id: Uuid,
     pub author_id: Uuid,

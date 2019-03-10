@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::schema::comments;
 
-#[derive(Debug, Queryable)]
+#[derive(Debug, Queryable, Identifiable)]
 pub struct Comment {
     pub id: usize,
     pub article_id: Uuid,

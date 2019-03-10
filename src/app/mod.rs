@@ -70,12 +70,12 @@ pub fn create() -> App<AppState> {
                     r.method(Method::POST).with_async(profiles::follow);
                     r.method(Method::DELETE).with_async(profiles::unfollow)
                 })
-            // Article routes ↓
-            /*.resource("articles", |r| {
-                r.method(Method::GET).with_async(articles::list);
-                r.method(Method::POST).with_async(articles::create)
-            })
-            .resource("articles/feed", |r| {
+                // Article routes ↓
+                .resource("articles", |r| {
+                    //r.method(Method::GET).with_async(articles::list);
+                    r.method(Method::POST).with_async(articles::create)
+                })
+            /*.resource("articles/feed", |r| {
                 r.method(Method::GET).with_async(articles::feed)
             })
             .resource("articles/{slug}", |r| {

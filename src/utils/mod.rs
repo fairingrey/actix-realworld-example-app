@@ -1,6 +1,6 @@
 pub mod auth;
-mod custom_type;
-mod hasher;
+pub mod custom_type;
+pub mod hasher;
 pub mod jwt;
 
 // just to make it less of a pain to write
