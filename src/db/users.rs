@@ -28,7 +28,7 @@ impl Handler<RegisterUser> for DbExecutor {
             image: None,
         };
 
-        let conn = &self.0.get().expect("Connection couldn't be opened");
+        let conn = &self.0.get()?;
 
         match diesel::insert_into(users)
             .values(new_user)
@@ -52,7 +52,7 @@ impl Handler<LoginUser> for DbExecutor {
 
         let provided_password_raw = &msg.password;
 
-        let conn = &self.0.get().expect("Connection couldn't be opened");
+        let conn = &self.0.get()?;
 
         let stored_user: User = users.filter(email.eq(msg.email)).first(conn)?;
         let checker = HashBuilder::from_phc(&stored_user.password)?;
@@ -88,7 +88,7 @@ impl Handler<UpdateUserOuter> for DbExecutor {
         let auth = msg.auth;
         let update_user = msg.update_user;
 
-        let conn = &self.0.get().expect("Connection couldn't be opened");
+        let conn = &self.0.get()?;
 
         let updated_password = match update_user.password {
             Some(updated_password) => Some(hasher().hash(&updated_password)?),

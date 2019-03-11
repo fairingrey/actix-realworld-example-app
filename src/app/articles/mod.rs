@@ -86,6 +86,18 @@ pub struct DeleteArticle {
 }
 
 #[derive(Debug)]
+pub struct FavoriteArticle {
+    pub auth: Auth,
+    pub slug: String,
+}
+
+#[derive(Debug)]
+pub struct UnfavoriteArticle {
+    pub auth: Auth,
+    pub slug: String,
+}
+
+#[derive(Debug)]
 pub struct GetArticles {
     pub auth: Option<Auth>,
     pub params: ArticlesParams,
@@ -195,6 +207,44 @@ pub fn delete(
         })
         .and_then(|res| match res {
             Ok(_) => Ok(HttpResponse::Ok().json(())),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn favorite(
+    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    authenticate(&req)
+        .and_then(move |auth| {
+            req.state()
+                .db
+                .send(FavoriteArticle {
+                    auth,
+                    slug: path.slug.to_owned(),
+                })
+                .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn unfavorite(
+    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    authenticate(&req)
+        .and_then(move |auth| {
+            req.state()
+                .db
+                .send(UnfavoriteArticle {
+                    auth,
+                    slug: path.slug.to_owned(),
+                })
+                .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
         })
 }

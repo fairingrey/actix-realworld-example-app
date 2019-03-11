@@ -22,7 +22,7 @@ impl Handler<GenerateAuth> for DbExecutor {
 
         let claims = msg.token.decode_jwt()?.claims;
 
-        let conn = &self.0.get().expect("Connection couldn't be opened");
+        let conn = &self.0.get()?;
 
         match users.find(claims.id).first(conn) {
             Ok(user) => Ok(Auth {

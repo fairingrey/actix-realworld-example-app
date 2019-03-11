@@ -18,7 +18,7 @@ impl Handler<GetProfile> for DbExecutor {
     type Result = Result<ProfileResponse>;
 
     fn handle(&mut self, msg: GetProfile, _: &mut Self::Context) -> Self::Result {
-        let conn = &self.0.get().expect("Connection couldn't be opened");
+        let conn = &self.0.get()?;
 
         let user: User = {
             use crate::schema::users::dsl::*;
@@ -56,7 +56,7 @@ impl Handler<FollowProfile> for DbExecutor {
     type Result = Result<ProfileResponse>;
 
     fn handle(&mut self, msg: FollowProfile, _: &mut Self::Context) -> Self::Result {
-        let conn = &self.0.get().expect("Connection couldn't be opened");
+        let conn = &self.0.get()?;
 
         let user_a: User = {
             use crate::schema::users::dsl::*;
@@ -92,7 +92,7 @@ impl Handler<UnfollowProfile> for DbExecutor {
     type Result = Result<ProfileResponse>;
 
     fn handle(&mut self, msg: UnfollowProfile, _: &mut Self::Context) -> Self::Result {
-        let conn = &self.0.get().expect("Connection couldn't be opened");
+        let conn = &self.0.get()?;
 
         let user_a: User = {
             use crate::schema::users::dsl::*;

@@ -7,7 +7,7 @@ use uuid::Uuid;
 use super::{DbExecutor, PooledConn};
 use crate::app::articles::{
     ArticleListResponse, ArticleResponse, ArticleResponseInner, CreateArticleOuter, DeleteArticle,
-    GetArticle, GetArticles, GetFeed, UpdateArticleOuter,
+    FavoriteArticle, GetArticle, GetArticles, GetFeed, UnfavoriteArticle, UpdateArticleOuter,
 };
 use crate::app::profiles::ProfileResponseInner;
 use crate::models::{
@@ -28,7 +28,7 @@ impl Handler<CreateArticleOuter> for DbExecutor {
     fn handle(&mut self, msg: CreateArticleOuter, _: &mut Self::Context) -> Self::Result {
         use crate::schema::articles;
 
-        let conn = &self.0.get().expect("Connection couldn't be opened");
+        let conn = &self.0.get()?;
 
         let author = msg.auth.user;
 
@@ -113,6 +113,30 @@ impl Handler<DeleteArticle> for DbExecutor {
     type Result = Result<()>;
 
     fn handle(&mut self, msg: DeleteArticle, _: &mut Self::Context) -> Self::Result {
+        unimplemented!()
+    }
+}
+
+impl Message for FavoriteArticle {
+    type Result = Result<ArticleResponse>;
+}
+
+impl Handler<FavoriteArticle> for DbExecutor {
+    type Result = Result<ArticleResponse>;
+
+    fn handle(&mut self, msg: FavoriteArticle, _: &mut Self::Context) -> Self::Result {
+        unimplemented!()
+    }
+}
+
+impl Message for UnfavoriteArticle {
+    type Result = Result<ArticleResponse>;
+}
+
+impl Handler<UnfavoriteArticle> for DbExecutor {
+    type Result = Result<ArticleResponse>;
+
+    fn handle(&mut self, msg: UnfavoriteArticle, _: &mut Self::Context) -> Self::Result {
         unimplemented!()
     }
 }

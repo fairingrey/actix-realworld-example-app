@@ -83,10 +83,10 @@ pub fn create() -> App<AppState> {
                     r.method(Method::PUT).with_async(articles::update);
                     r.method(Method::DELETE).with_async(articles::delete)
                 })
-            //                .resource("articles/{slug}/favorite", |r| {
-            //                    r.method(Method::POST).with_async(articles::favorite);
-            //                    r.method(Method::DELETE).with_async(articles::unfavorite)
-            //                })
+                .resource("articles/{slug}/favorite", |r| {
+                    r.method(Method::POST).with_async(articles::favorite);
+                    r.method(Method::DELETE).with_async(articles::unfavorite)
+                })
             //                .resource("articles/{slug}/comments", |r| {
             //                    r.method(Method::GET).with_async(articles::comments::list);
             //                    r.method(Method::POST).with_async(articles::comments::add)
