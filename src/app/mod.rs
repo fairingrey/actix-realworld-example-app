@@ -87,14 +87,15 @@ pub fn create() -> App<AppState> {
                     r.method(Method::POST).with_async(articles::favorite);
                     r.method(Method::DELETE).with_async(articles::unfavorite)
                 })
-            //                .resource("articles/{slug}/comments", |r| {
-            //                    r.method(Method::GET).with_async(articles::comments::list);
-            //                    r.method(Method::POST).with_async(articles::comments::add)
-            //                })
-            //                .resource("articles/{slug}/comments/{comment_id}", |r| {
-            //                    r.delete().with_async(articles::comments::delete)
-            //                })
-            //                // Tags routes ↓
-            //                .resource("tags", |r| r.method(Method::GET).with_async(tags::list))
+                .resource("articles/{slug}/comments", |r| {
+                    r.method(Method::GET).with_async(articles::comments::list);
+                    r.method(Method::POST).with_async(articles::comments::add)
+                })
+                .resource("articles/{slug}/comments/{comment_id}", |r| {
+                    r.method(Method::DELETE)
+                        .with_async(articles::comments::delete)
+                })
+                // Tags routes ↓
+                .resource("tags", |r| r.method(Method::GET).with_async(tags::get))
         })
 }

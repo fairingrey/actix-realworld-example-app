@@ -28,16 +28,16 @@ pub struct ArticleCommentPath {
 // Client Messages ↓
 
 #[derive(Debug, Validate, Deserialize)]
-pub struct CreateComment {
+pub struct AddComment {
     #[validate(length(min = "1"))]
     pub body: String,
 }
 
 #[derive(Debug)]
-pub struct CreateCommentOuter {
+pub struct AddCommentOuter {
     pub auth: Auth,
     pub slug: String,
-    pub comment: CreateComment,
+    pub comment: AddComment,
 }
 
 #[derive(Debug)]
@@ -49,7 +49,8 @@ pub struct GetComments {
 #[derive(Debug)]
 pub struct DeleteComment {
     pub auth: Auth,
-    pub path: ArticleCommentPath,
+    pub slug: String,
+    pub comment_id: usize,
 }
 
 // JSON response objects ↓
@@ -75,3 +76,70 @@ pub struct CommentListResponse {
 }
 
 // Route handlers ↓
+
+pub fn add(
+    (path, form, req): (
+        Path<ArticlePath>,
+        Json<In<AddComment>>,
+        HttpRequest<AppState>,
+    ),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let comment = form.into_inner().comment;
+
+    let db = req.state().db.clone();
+
+    result(comment.validate())
+        .from_err()
+        .and_then(move |_| authenticate(&req))
+        .and_then(move |auth| {
+            db.send(AddCommentOuter {
+                auth,
+                slug: path.slug.to_owned(),
+                comment,
+            })
+            .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn list(
+    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .then(move |auth| {
+            db.send(GetComments {
+                auth: auth.ok(),
+                slug: path.slug.to_owned(),
+            })
+            .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}
+
+pub fn delete(
+    (path, req): (Path<ArticleCommentPath>, HttpRequest<AppState>),
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let db = req.state().db.clone();
+
+    authenticate(&req)
+        .and_then(move |auth| {
+            db.send(DeleteComment {
+                auth,
+                slug: path.slug.to_owned(),
+                comment_id: path.comment_id.to_owned(),
+            })
+            .from_err()
+        })
+        .and_then(|res| match res {
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
+            Err(e) => Ok(e.error_response()),
+        })
+}

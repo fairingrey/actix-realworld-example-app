@@ -2,6 +2,7 @@ mod articles;
 mod auth;
 mod comments;
 mod profiles;
+mod tags;
 mod users;
 
 use crate::prelude::*;
