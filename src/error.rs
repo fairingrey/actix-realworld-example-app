@@ -5,9 +5,12 @@ use diesel::{
 };
 use jwt::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 use libreauth::pass::ErrorCode as PassErrorCode;
-use serde_json::Value as JsonValue;
+use serde_json::{
+    Map as JsonMap,
+    Value as JsonValue,
+};
 use std::convert::From;
-use validator::ValidationErrors;
+use validator::{ ValidationError, ValidationErrors };
 
 // more error types can be found at below link but we should only need these for now
 // https://actix.rs/actix-web/actix_web/struct.HttpResponse.html
@@ -62,13 +65,13 @@ impl From<JwtError> for Error {
     fn from(error: JwtError) -> Self {
         match error.kind() {
             JwtErrorKind::InvalidToken => {
-                Error::Unauthorized(JsonValue::String("Token is invalid".to_string()))
+                Error::Unauthorized(json!("Token is invalid"))
             }
             JwtErrorKind::InvalidIssuer => {
-                Error::Unauthorized(JsonValue::String("Issuer is invalid".to_string()))
+                Error::Unauthorized(json!("Issuer is invalid"))
             }
-            _ => Error::Unauthorized(JsonValue::String(
-                "An issue was found with the token provided".to_string(),
+            _ => Error::Unauthorized(json!(
+                "An issue was found with the token provided"
             )),
         }
     }
@@ -80,7 +83,7 @@ impl From<DieselError> for Error {
             DieselError::DatabaseError(kind, info) => {
                 if let DatabaseErrorKind::UniqueViolation = kind {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
-                    return Error::UnprocessableEntity(JsonValue::String(message));
+                    return Error::UnprocessableEntity(json!(message));
                 }
                 Error::InternalServerError
             }
@@ -102,9 +105,13 @@ impl From<PassErrorCode> for Error {
 }
 
 impl From<ValidationErrors> for Error {
-    fn from(_errors: ValidationErrors) -> Self {
+    fn from(errors: ValidationErrors) -> Self {
         // TODO: flatten this into proper validation errors JSON
         // https://github.com/fairingrey/actix-realworld-example-app/issues/2
-        Error::BadRequest(JsonValue::String("Validation failed.".to_string()))
+        let err_map = JsonMap::new();
+
+        let errors_iter = errors.field_errors();
+
+        Error::BadRequest(json!("Validation failed."))
     }
 }

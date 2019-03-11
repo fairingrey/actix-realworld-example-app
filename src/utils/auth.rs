@@ -1,6 +1,6 @@
 use actix_web::{http::header::AUTHORIZATION, HttpRequest};
 use futures::{future::result, Future};
-use serde_json::Value as JsonValue;
+//use serde_json::Value as JsonValue;
 
 use crate::app::AppState;
 use crate::models::User;
@@ -33,15 +33,15 @@ fn preprocess_authz_token(req: &HttpRequest<AppState>) -> Result<String> {
     let token = match req.headers().get(AUTHORIZATION) {
         Some(token) => token.to_str().unwrap(),
         None => {
-            return Err(Error::Unauthorized(JsonValue::String(
-                "No authorization was provided".to_string(),
+            return Err(Error::Unauthorized(json!(
+                "No authorization was provided"
             )))
         }
     };
 
     if !token.starts_with(TOKEN_PREFIX) {
-        return Err(Error::Unauthorized(JsonValue::String(
-            "Invalid authorization method".to_string(),
+        return Err(Error::Unauthorized(json!(
+            "Invalid authorization method"
         )));
     }
 
