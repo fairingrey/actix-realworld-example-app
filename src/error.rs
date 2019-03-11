@@ -5,8 +5,9 @@ use diesel::{
 };
 use jwt::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 use libreauth::pass::ErrorCode as PassErrorCode;
+use serde_json::Value as JsonValue;
 use std::convert::From;
-use validator::{ValidationError, ValidationErrors};
+use validator::ValidationErrors;
 
 // more error types can be found at below link but we should only need these for now
 // https://actix.rs/actix-web/actix_web/struct.HttpResponse.html
@@ -14,19 +15,19 @@ use validator::{ValidationError, ValidationErrors};
 pub enum Error {
     // 400
     #[fail(display = "Bad Request: {}", _0)]
-    BadRequest(String),
+    BadRequest(JsonValue),
 
     // 401
     #[fail(display = "Unauthorized: {}", _0)]
-    Unauthorized(String),
+    Unauthorized(JsonValue),
 
     // 403
     #[fail(display = "Forbidden: {}", _0)]
-    Forbidden(String),
+    Forbidden(JsonValue),
 
     // 422
     #[fail(display = "Unprocessable Entity: {}", _0)]
-    UnprocessableEntity(String),
+    UnprocessableEntity(JsonValue),
 
     // 500
     #[fail(display = "Internal Server Error")]
@@ -60,9 +61,15 @@ impl From<MailboxError> for Error {
 impl From<JwtError> for Error {
     fn from(error: JwtError) -> Self {
         match error.kind() {
-            JwtErrorKind::InvalidToken => Error::Unauthorized("Token is invalid".to_string()),
-            JwtErrorKind::InvalidIssuer => Error::Unauthorized("Issuer is invalid".to_string()),
-            _ => Error::Unauthorized("An issue was found with the token provided".to_string()),
+            JwtErrorKind::InvalidToken => {
+                Error::Unauthorized(JsonValue::String("Token is invalid".to_string()))
+            }
+            JwtErrorKind::InvalidIssuer => {
+                Error::Unauthorized(JsonValue::String("Issuer is invalid".to_string()))
+            }
+            _ => Error::Unauthorized(JsonValue::String(
+                "An issue was found with the token provided".to_string(),
+            )),
         }
     }
 }
@@ -73,7 +80,7 @@ impl From<DieselError> for Error {
             DieselError::DatabaseError(kind, info) => {
                 if let DatabaseErrorKind::UniqueViolation = kind {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
-                    return Error::UnprocessableEntity(message);
+                    return Error::UnprocessableEntity(JsonValue::String(message));
                 }
                 Error::InternalServerError
             }
@@ -94,14 +101,10 @@ impl From<PassErrorCode> for Error {
     }
 }
 
-impl From<ValidationError> for Error {
-    fn from(_error: ValidationError) -> Self {
-        Error::BadRequest("Validation failed.".to_string())
-    }
-}
-
 impl From<ValidationErrors> for Error {
     fn from(_errors: ValidationErrors) -> Self {
-        Error::BadRequest("Validation failed.".to_string())
+        // TODO: flatten this into proper validation errors JSON
+        // https://github.com/fairingrey/actix-realworld-example-app/issues/2
+        Error::BadRequest(JsonValue::String("Validation failed.".to_string()))
     }
 }

@@ -1,6 +1,7 @@
 use actix::prelude::*;
 use diesel::prelude::*;
 use libreauth::pass::HashBuilder;
+use serde_json::Value as JsonValue;
 
 use super::DbExecutor;
 use crate::app::users::{LoginUser, RegisterUser, UpdateUserOuter, UserResponse};
@@ -70,7 +71,9 @@ impl Handler<LoginUser> for DbExecutor {
             }
             Ok(stored_user.into())
         } else {
-            Err(Error::Unauthorized("Wrong password".to_string()))
+            Err(Error::Unauthorized(JsonValue::String(
+                "Wrong password".to_string(),
+            )))
         }
     }
 }
