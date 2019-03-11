@@ -70,7 +70,9 @@ impl Handler<LoginUser> for DbExecutor {
             }
             Ok(stored_user.into())
         } else {
-            Err(Error::Unauthorized("Wrong password".to_string()))
+            Err(Error::Unauthorized(json!({
+                "error": "Wrong password",
+            })))
         }
     }
 }
