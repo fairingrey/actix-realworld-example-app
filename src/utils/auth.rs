@@ -1,6 +1,5 @@
 use actix_web::{http::header::AUTHORIZATION, HttpRequest};
 use futures::{future::result, Future};
-//use serde_json::Value as JsonValue;
 
 use crate::app::AppState;
 use crate::models::User;
