@@ -91,7 +91,7 @@ pub fn create() -> App<AppState> {
             //                    r.method(Method::GET).with_async(articles::comments::list);
             //                    r.method(Method::POST).with_async(articles::comments::add)
             //                })
-            //                .resource("articles/{slug}/comments/{id}", |r| {
+            //                .resource("articles/{slug}/comments/{comment_id}", |r| {
             //                    r.delete().with_async(articles::comments::delete)
             //                })
             //                // Tags routes ↓

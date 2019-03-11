@@ -14,7 +14,7 @@ use crate::models::{
     Article, ArticleChange, ArticleTag, NewArticle, NewArticleTag, NewFavoriteArticle,
 };
 use crate::prelude::*;
-use crate::utils::custom_type::CustomDateTime;
+use crate::utils::CustomDateTime;
 
 // message handler implementations ↓
 

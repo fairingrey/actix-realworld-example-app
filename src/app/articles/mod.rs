@@ -29,8 +29,8 @@ pub struct ArticlesParams {
     tag: Option<String>,
     author: Option<String>,
     favorited: Option<String>,
-    limit: Option<usize>,
-    offset: Option<usize>,
+    limit: Option<usize>,  // <- if not set, is 20
+    offset: Option<usize>, // <- if not set, is 0
 }
 
 #[derive(Debug, Deserialize)]
@@ -76,6 +76,7 @@ pub struct UpdateArticle {
 #[derive(Debug)]
 pub struct UpdateArticleOuter {
     pub auth: Auth,
+    pub slug: String,
     pub article: UpdateArticle,
 }
 
@@ -176,7 +177,11 @@ pub fn get(
 }
 
 pub fn update(
-    (form, req): (Json<In<UpdateArticle>>, HttpRequest<AppState>),
+    (path, form, req): (
+        Path<ArticlePath>,
+        Json<In<UpdateArticle>>,
+        HttpRequest<AppState>,
+    ),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let article = form.into_inner().article;
 
@@ -185,7 +190,14 @@ pub fn update(
     result(article.validate())
         .from_err()
         .and_then(move |_| authenticate(&req))
-        .and_then(move |auth| db.send(UpdateArticleOuter { auth, article }).from_err())
+        .and_then(move |auth| {
+            db.send(UpdateArticleOuter {
+                auth,
+                slug: path.slug.to_owned(),
+                article,
+            })
+            .from_err()
+        })
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
