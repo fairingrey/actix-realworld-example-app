@@ -32,17 +32,11 @@ pub fn authenticate(req: &HttpRequest<AppState>) -> impl Future<Item = Auth, Err
 fn preprocess_authz_token(req: &HttpRequest<AppState>) -> Result<String> {
     let token = match req.headers().get(AUTHORIZATION) {
         Some(token) => token.to_str().unwrap(),
-        None => {
-            return Err(Error::Unauthorized(json!(
-                "No authorization was provided"
-            )))
-        }
+        None => return Err(Error::Unauthorized(json!("No authorization was provided"))),
     };
 
     if !token.starts_with(TOKEN_PREFIX) {
-        return Err(Error::Unauthorized(json!(
-            "Invalid authorization method"
-        )));
+        return Err(Error::Unauthorized(json!("Invalid authorization method")));
     }
 
     let token = token.replacen(TOKEN_PREFIX, "", 1);

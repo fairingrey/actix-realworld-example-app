@@ -5,12 +5,9 @@ use diesel::{
 };
 use jwt::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 use libreauth::pass::ErrorCode as PassErrorCode;
-use serde_json::{
-    Map as JsonMap,
-    Value as JsonValue,
-};
+use serde_json::{Map as JsonMap, Value as JsonValue};
 use std::convert::From;
-use validator::{ ValidationError, ValidationErrors };
+use validator::{ValidationError, ValidationErrors};
 
 // more error types can be found at below link but we should only need these for now
 // https://actix.rs/actix-web/actix_web/struct.HttpResponse.html
@@ -64,15 +61,9 @@ impl From<MailboxError> for Error {
 impl From<JwtError> for Error {
     fn from(error: JwtError) -> Self {
         match error.kind() {
-            JwtErrorKind::InvalidToken => {
-                Error::Unauthorized(json!("Token is invalid"))
-            }
-            JwtErrorKind::InvalidIssuer => {
-                Error::Unauthorized(json!("Issuer is invalid"))
-            }
-            _ => Error::Unauthorized(json!(
-                "An issue was found with the token provided"
-            )),
+            JwtErrorKind::InvalidToken => Error::Unauthorized(json!("Token is invalid")),
+            JwtErrorKind::InvalidIssuer => Error::Unauthorized(json!("Issuer is invalid")),
+            _ => Error::Unauthorized(json!("An issue was found with the token provided")),
         }
     }
 }
