@@ -6,9 +6,8 @@ use diesel::{
 use jwt::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 use libreauth::pass::ErrorCode as PassErrorCode;
 use serde_json::{Map as JsonMap, Value as JsonValue};
-use std::borrow::Cow;
 use std::convert::From;
-use validator::{ValidationError, ValidationErrors};
+use validator::ValidationErrors;
 
 // more error types can be found at below link but we should only need these for now
 // https://actix.rs/actix-web/actix_web/struct.HttpResponse.html
