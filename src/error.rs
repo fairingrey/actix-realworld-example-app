@@ -6,6 +6,7 @@ use diesel::{
 use jwt::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 use libreauth::pass::ErrorCode as PassErrorCode;
 use serde_json::{Map as JsonMap, Value as JsonValue};
+use std::borrow::Cow;
 use std::convert::From;
 use validator::{ValidationError, ValidationErrors};
 
@@ -61,9 +62,15 @@ impl From<MailboxError> for Error {
 impl From<JwtError> for Error {
     fn from(error: JwtError) -> Self {
         match error.kind() {
-            JwtErrorKind::InvalidToken => Error::Unauthorized(json!("Token is invalid")),
-            JwtErrorKind::InvalidIssuer => Error::Unauthorized(json!("Issuer is invalid")),
-            _ => Error::Unauthorized(json!("An issue was found with the token provided")),
+            JwtErrorKind::InvalidToken => Error::Unauthorized(json!({
+                "error": "Token is invalid",
+            })),
+            JwtErrorKind::InvalidIssuer => Error::Unauthorized(json!({
+                "error": "Issuer is invalid",
+            })),
+            _ => Error::Unauthorized(json!({
+                "error": "An issue was found with the token provided",
+            })),
         }
     }
 }
@@ -74,7 +81,7 @@ impl From<DieselError> for Error {
             DieselError::DatabaseError(kind, info) => {
                 if let DatabaseErrorKind::UniqueViolation = kind {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
-                    return Error::UnprocessableEntity(json!(message));
+                    return Error::UnprocessableEntity(json!({ "error": message }));
                 }
                 Error::InternalServerError
             }
@@ -97,12 +104,22 @@ impl From<PassErrorCode> for Error {
 
 impl From<ValidationErrors> for Error {
     fn from(errors: ValidationErrors) -> Self {
-        // TODO: flatten this into proper validation errors JSON
-        // https://github.com/fairingrey/actix-realworld-example-app/issues/2
-        let err_map = JsonMap::new();
+        let mut err_map = JsonMap::new();
 
-        let errors_iter = errors.field_errors();
+        // transforms errors into objects that err_map can take
+        for (field, errors) in errors.field_errors().iter() {
+            let errors: Vec<JsonValue> = errors
+                .iter()
+                .map(|error| {
+                    // dbg!(error) // <- Uncomment this if you want to see what error looks like
+                    json!("fails validation check")
+                })
+                .collect();
+            err_map.insert(field.to_string(), json!(errors));
+        }
 
-        Error::BadRequest(json!("Validation failed."))
+        Error::UnprocessableEntity(json!({
+            "errors": err_map,
+        }))
     }
 }
