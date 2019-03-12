@@ -102,10 +102,34 @@ impl Handler<GetArticle> for DbExecutor {
             .filter(favorite_articles::article_id.eq(article.id))
             .count()
             .get_result::<i64>(conn)?;
+        let favorites_count = favorites_count as usize;
 
-        // TODO
+        let (favorited, following) = match msg.auth {
+            Some(auth) => get_favorited_and_following(article.id, author.id, auth.user.id, conn)?,
+            None => (false, false),
+        };
 
-        unimplemented!()
+        let tags = select_tags_on_article(article.id, conn)?;
+
+        Ok(ArticleResponse {
+            article: ArticleResponseInner {
+                slug: article.slug,
+                title: article.title,
+                description: article.description,
+                body: article.body,
+                tag_list: tags,
+                created_at: CustomDateTime(article.created_at),
+                updated_at: CustomDateTime(article.updated_at),
+                favorited,
+                favorites_count,
+                author: ProfileResponseInner {
+                    username: author.username,
+                    bio: author.bio,
+                    image: author.image,
+                    following,
+                },
+            },
+        })
     }
 }
 
@@ -191,4 +215,46 @@ fn add_tag(article_id: Uuid, tag_name: &str, conn: &PooledConn) -> Result<Articl
         })
         .get_result::<ArticleTag>(conn)
         .map_err(std::convert::Into::into) // <- clippy doesn't like it when I write this as |e| e.into() so...
+}
+
+fn get_favorited_and_following(
+    article_id: Uuid,
+    author_id: Uuid,
+    user_id: Uuid,
+    conn: &PooledConn,
+) -> Result<(bool, bool)> {
+    use crate::schema::{favorite_articles, followers, users};
+
+    // joins don't look pretty in Diesel, I know
+    let (_, favorite_id, follow_id) = users::table
+        .left_join(
+            favorite_articles::table.on(favorite_articles::user_id
+                .eq(users::id)
+                .and(favorite_articles::article_id.eq(article_id))),
+        )
+        .left_join(
+            followers::table.on(followers::follower_id
+                .eq(users::id)
+                .and(followers::user_id.eq(author_id))),
+        )
+        .filter(users::id.eq(user_id))
+        .select((
+            users::id,
+            favorite_articles::user_id.nullable(),
+            followers::follower_id.nullable(),
+        ))
+        .get_result::<(Uuid, Option<Uuid>, Option<Uuid>)>(conn)?;
+
+    Ok((favorite_id.is_some(), follow_id.is_some()))
+}
+
+fn select_tags_on_article(article_id: Uuid, conn: &PooledConn) -> Result<Vec<String>> {
+    use crate::schema::article_tags;
+
+    let tags = article_tags::table
+        .filter(article_tags::article_id.eq(article_id))
+        .select(article_tags::tag_name)
+        .load(conn)?;
+
+    Ok(tags)
 }
