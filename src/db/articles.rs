@@ -35,11 +35,7 @@ impl Handler<CreateArticleOuter> for DbExecutor {
         // Generating the Uuid here since it will help make a unique slug
         // This is for when some articles may have similar titles such that they generate the same slug
         let new_article_id = Uuid::new_v4();
-        let slug = format!(
-            "{}-{}",
-            to_blob(&new_article_id),
-            slugify(&msg.article.title)
-        );
+        let slug = generate_slug(&new_article_id, &msg.article.title);
 
         let new_article = NewArticle {
             id: new_article_id,
@@ -53,11 +49,11 @@ impl Handler<CreateArticleOuter> for DbExecutor {
             .values(&new_article)
             .get_result::<Article>(conn)?;
 
-        let tag_list = msg.article.tag_list;
-
-        for tag in tag_list.iter() {
-            add_tag(article.id, tag, conn)?;
-        }
+        let inserted_tags = replace_tags(article.id, msg.article.tag_list, conn)?;
+        let tags = inserted_tags
+            .iter()
+            .map(|article_tag| article_tag.tag_name.to_owned())
+            .collect::<Vec<String>>();
 
         Ok(ArticleResponse {
             article: ArticleResponseInner {
@@ -65,7 +61,7 @@ impl Handler<CreateArticleOuter> for DbExecutor {
                 title: article.title,
                 description: article.description,
                 body: article.body,
-                tag_list,
+                tag_list: tags,
                 created_at: CustomDateTime(article.created_at),
                 updated_at: CustomDateTime(article.updated_at),
                 favorited: false,
@@ -154,7 +150,7 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
         let author = msg.auth.user;
 
         let slug = match &msg.article.title {
-            Some(title) => Some(format!("{}-{}", to_blob(&article.id), slugify(&title))),
+            Some(title) => Some(generate_slug(&article.id, &title)),
             None => None,
         };
 
@@ -171,8 +167,11 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
 
         let tags = match msg.article.tag_list {
             Some(tags) => {
-                replace_tags(article.id, tags.to_owned(), conn)?;
-                tags
+                let inserted_tags = replace_tags(article.id, tags, conn)?;
+                inserted_tags
+                    .iter()
+                    .map(|article_tag| article_tag.tag_name.to_owned())
+                    .collect::<Vec<String>>()
             }
             None => Vec::<String>::with_capacity(0),
         };
@@ -211,6 +210,10 @@ impl Handler<DeleteArticle> for DbExecutor {
     type Result = Result<()>;
 
     fn handle(&mut self, msg: DeleteArticle, _: &mut Self::Context) -> Self::Result {
+        use crate::schema::articles;
+
+        let conn = &self.0.get()?;
+
         unimplemented!()
     }
 }
@@ -223,6 +226,10 @@ impl Handler<FavoriteArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: FavoriteArticle, _: &mut Self::Context) -> Self::Result {
+        use crate::schema::articles;
+
+        let conn = &self.0.get()?;
+
         unimplemented!()
     }
 }
@@ -235,6 +242,10 @@ impl Handler<UnfavoriteArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: UnfavoriteArticle, _: &mut Self::Context) -> Self::Result {
+        use crate::schema::articles;
+
+        let conn = &self.0.get()?;
+
         unimplemented!()
     }
 }
@@ -247,6 +258,10 @@ impl Handler<GetArticles> for DbExecutor {
     type Result = Result<ArticleListResponse>;
 
     fn handle(&mut self, msg: GetArticles, _: &mut Self::Context) -> Self::Result {
+        use crate::schema::articles;
+
+        let conn = &self.0.get()?;
+
         unimplemented!()
     }
 }
@@ -259,8 +274,16 @@ impl Handler<GetFeed> for DbExecutor {
     type Result = Result<ArticleListResponse>;
 
     fn handle(&mut self, msg: GetFeed, _: &mut Self::Context) -> Self::Result {
+        use crate::schema::articles;
+
+        let conn = &self.0.get()?;
+
         unimplemented!()
     }
+}
+
+fn generate_slug(uuid: &Uuid, title: &str) -> String {
+    format!("{}-{}", to_blob(uuid), slugify(title))
 }
 
 fn add_tag<T>(article_id: Uuid, tag_name: T, conn: &PooledConn) -> Result<ArticleTag>
@@ -274,6 +297,8 @@ where
             article_id,
             tag_name: tag_name.to_string(),
         })
+        .on_conflict((article_tags::article_id, article_tags::tag_name))
+        .do_nothing()
         .get_result::<ArticleTag>(conn)
         .map_err(std::convert::Into::into) // <- clippy doesn't like it when I write this as |e| e.into() so...
 }
