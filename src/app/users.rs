@@ -81,8 +81,9 @@ pub struct UpdateUser {
         message = "fails validation - must be 8-72 characters long"
     ))]
     pub password: Option<String>,
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub bio: Option<String>,
-    #[validate(url)]
+    #[validate(url(message = "is not a URL"))]
     pub image: Option<String>,
 }
 

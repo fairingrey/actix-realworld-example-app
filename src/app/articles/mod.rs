@@ -50,6 +50,7 @@ pub struct CreateArticle {
     pub description: String,
     #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub body: String,
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub tag_list: Vec<String>,
 }
 
@@ -74,6 +75,7 @@ pub struct UpdateArticle {
     pub description: Option<String>,
     #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub body: Option<String>,
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub tag_list: Option<Vec<String>>,
 }
 
