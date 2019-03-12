@@ -29,7 +29,7 @@ pub struct ArticleCommentPath {
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct AddComment {
-    #[validate(length(min = "1"))]
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub body: String,
 }
 

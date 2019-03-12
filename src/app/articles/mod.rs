@@ -44,9 +44,11 @@ pub struct FeedParams {
 #[derive(Debug, Validate, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateArticle {
-    #[validate(length(min = "1"))]
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub title: String,
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub description: String,
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub body: String,
     pub tag_list: Vec<String>,
 }
@@ -66,9 +68,11 @@ pub struct GetArticle {
 #[derive(Debug, Validate, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateArticle {
-    #[validate(length(min = "1"))]
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub title: Option<String>,
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub description: Option<String>,
+    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
     pub body: Option<String>,
     pub tag_list: Option<Vec<String>>,
 }

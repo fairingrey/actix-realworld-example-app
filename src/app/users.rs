@@ -25,29 +25,61 @@ pub struct In<U> {
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct RegisterUser {
-    #[validate(length(min = "1", max = "20"), regex = "RE_USERNAME")]
+    #[validate(
+        length(
+            min = "1",
+            max = "20",
+            message = "fails validation - must be 1-20 characters long"
+        ),
+        regex(
+            path = "RE_USERNAME",
+            message = "fails validation - is not only alphanumeric/underscore characters"
+        )
+    )]
     pub username: String,
-    #[validate(email)]
+    #[validate(email(message = "fails validation - is not a valid email address"))]
     pub email: String,
-    #[validate(length(min = "8", max = "72"))]
+    #[validate(length(
+        min = "8",
+        max = "72",
+        message = "fails validation - must be 8-72 characters long"
+    ))]
     pub password: String,
 }
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct LoginUser {
-    #[validate(email)]
+    #[validate(email(message = "fails validation - is not a valid email address"))]
     pub email: String,
-    #[validate(length(min = "8", max = "72"))]
+    #[validate(length(
+        min = "8",
+        max = "72",
+        message = "fails validation - must be 8-72 characters long"
+    ))]
     pub password: String,
 }
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct UpdateUser {
-    #[validate(length(min = "1", max = "20"), regex = "RE_USERNAME")]
+    #[validate(
+        length(
+            min = "1",
+            max = "20",
+            message = "fails validation - must be 1-20 characters long"
+        ),
+        regex(
+            path = "RE_USERNAME",
+            message = "fails validation - is not only alphanumeric/underscore characters"
+        )
+    )]
     pub username: Option<String>,
     #[validate(email)]
     pub email: Option<String>,
-    #[validate(length(min = "8", max = "72"))]
+    #[validate(length(
+        min = "8",
+        max = "72",
+        message = "fails validation - must be 8-72 characters long"
+    ))]
     pub password: Option<String>,
     pub bio: Option<String>,
     #[validate(url)]

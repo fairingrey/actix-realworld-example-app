@@ -111,7 +111,7 @@ impl From<ValidationErrors> for Error {
                 .iter()
                 .map(|error| {
                     // dbg!(error) // <- Uncomment this if you want to see what error looks like
-                    json!("fails validation check")
+                    json!(error.message)
                 })
                 .collect();
             err_map.insert(field.to_string(), json!(errors));
