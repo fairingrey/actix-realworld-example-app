@@ -11,7 +11,7 @@ use crate::app::articles::{
 };
 use crate::app::profiles::ProfileResponseInner;
 use crate::models::{
-    Article, ArticleChange, ArticleTag, NewArticle, NewArticleTag, NewFavoriteArticle,
+    Article, ArticleChange, ArticleTag, NewArticle, NewArticleTag, NewFavoriteArticle, User,
 };
 use crate::prelude::*;
 use crate::utils::CustomDateTime;
@@ -89,6 +89,22 @@ impl Handler<GetArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: GetArticle, _: &mut Self::Context) -> Self::Result {
+        use crate::schema::{articles, favorite_articles, followers, users};
+
+        let conn = &self.0.get()?;
+
+        let (article, author) = articles::table
+            .inner_join(users::table)
+            .filter(articles::slug.eq(msg.slug))
+            .get_result::<(Article, User)>(conn)?;
+
+        let favorites_count = favorite_articles::table
+            .filter(favorite_articles::article_id.eq(article.id))
+            .count()
+            .get_result::<i64>(conn)?;
+
+        // TODO
+
         unimplemented!()
     }
 }

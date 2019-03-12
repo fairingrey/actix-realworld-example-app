@@ -64,6 +64,12 @@ impl Handler<FollowProfile> for DbExecutor {
         };
         let user_b: User = msg.auth.user;
 
+        if user_a.id == user_b.id {
+            return Err(Error::UnprocessableEntity(
+                json!({"error": "You cannot follow yourself"}),
+            ));
+        }
+
         use crate::schema::followers::dsl::*;
 
         diesel::insert_into(followers)
