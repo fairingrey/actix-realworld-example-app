@@ -23,7 +23,7 @@ impl Handler<RegisterUser> for DbExecutor {
         let new_user = NewUser {
             username: msg.username.clone(),
             email: msg.email.clone(),
-            password: hasher().hash(&msg.password).unwrap(),
+            password: hasher().hash(&msg.password)?,
             bio: None,
             image: None,
         };
