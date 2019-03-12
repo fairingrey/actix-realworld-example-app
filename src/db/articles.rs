@@ -89,7 +89,7 @@ impl Handler<GetArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: GetArticle, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::{articles, favorite_articles, followers, users};
+        use crate::schema::{articles, followers, users};
 
         let conn = &self.0.get()?;
 
@@ -98,16 +98,12 @@ impl Handler<GetArticle> for DbExecutor {
             .filter(articles::slug.eq(msg.slug))
             .get_result::<(Article, User)>(conn)?;
 
-        let favorites_count = favorite_articles::table
-            .filter(favorite_articles::article_id.eq(article.id))
-            .count()
-            .get_result::<i64>(conn)?;
-        let favorites_count = favorites_count as usize;
-
         let (favorited, following) = match msg.auth {
             Some(auth) => get_favorited_and_following(article.id, author.id, auth.user.id, conn)?,
             None => (false, false),
         };
+
+        let favorites_count = get_favorites_count(article.id, conn)?;
 
         let tags = select_tags_on_article(article.id, conn)?;
 
@@ -141,7 +137,69 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: UpdateArticleOuter, _: &mut Self::Context) -> Self::Result {
-        unimplemented!()
+        use crate::schema::articles;
+
+        let conn = &self.0.get()?;
+
+        let article = articles::table
+            .filter(articles::slug.eq(msg.slug))
+            .get_result::<Article>(conn)?;
+
+        if msg.auth.user.id != article.author_id {
+            return Err(Error::Forbidden(json!({
+                "error": "user is not the author of article in question",
+            })));
+        }
+
+        let author = msg.auth.user;
+
+        let slug = match &msg.article.title {
+            Some(title) => Some(format!("{}-{}", to_blob(&article.id), slugify(&title))),
+            None => None,
+        };
+
+        let article_change = ArticleChange {
+            slug,
+            title: msg.article.title,
+            description: msg.article.description,
+            body: msg.article.body,
+        };
+
+        let article = diesel::update(articles::table.find(article.id))
+            .set(&article_change)
+            .get_result::<Article>(conn)?;
+
+        let tags = match msg.article.tag_list {
+            Some(tags) => {
+                replace_tags(article.id, tags.to_owned(), conn)?;
+                tags
+            }
+            None => Vec::<String>::with_capacity(0),
+        };
+
+        let favorites_count = get_favorites_count(article.id, conn)?;
+
+        let favorited = get_favorited(article.id, author.id, conn)?;
+
+        Ok(ArticleResponse {
+            article: ArticleResponseInner {
+                slug: article.slug,
+                title: article.title,
+                description: article.description,
+                body: article.body,
+                tag_list: tags,
+                created_at: CustomDateTime(article.created_at),
+                updated_at: CustomDateTime(article.updated_at),
+                favorited,
+                favorites_count,
+                author: ProfileResponseInner {
+                    username: author.username,
+                    bio: author.bio,
+                    image: author.image,
+                    following: false,
+                },
+            },
+        })
     }
 }
 
@@ -205,16 +263,61 @@ impl Handler<GetFeed> for DbExecutor {
     }
 }
 
-fn add_tag(article_id: Uuid, tag_name: &str, conn: &PooledConn) -> Result<ArticleTag> {
+fn add_tag<T>(article_id: Uuid, tag_name: T, conn: &PooledConn) -> Result<ArticleTag>
+where
+    T: ToString,
+{
     use crate::schema::article_tags;
 
     diesel::insert_into(article_tags::table)
         .values(NewArticleTag {
             article_id,
-            tag_name: tag_name.to_owned(),
+            tag_name: tag_name.to_string(),
         })
         .get_result::<ArticleTag>(conn)
         .map_err(std::convert::Into::into) // <- clippy doesn't like it when I write this as |e| e.into() so...
+}
+
+fn replace_tags<I>(article_id: Uuid, tags: I, conn: &PooledConn) -> Result<Vec<ArticleTag>>
+where
+    I: IntoIterator<Item = String>,
+{
+    use crate::schema::{article_tags, articles};
+
+    let _ = diesel::delete(article_tags::table.filter(article_tags::article_id.eq(article_id)))
+        .get_results::<ArticleTag>(conn)?;
+
+    // this may look confusing but collect can convert to this
+    // https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect
+    tags.into_iter()
+        .map(|tag_name| add_tag(article_id, &tag_name.to_string(), &conn))
+        .collect::<Result<Vec<ArticleTag>>>()
+}
+
+fn get_favorites_count(article_id: Uuid, conn: &PooledConn) -> Result<usize> {
+    use crate::schema::favorite_articles;
+
+    let favorites_count = favorite_articles::table
+        .filter(favorite_articles::article_id.eq(article_id))
+        .count()
+        .get_result::<i64>(conn)?;
+    Ok(favorites_count as usize)
+}
+
+fn get_favorited(article_id: Uuid, user_id: Uuid, conn: &PooledConn) -> Result<bool> {
+    use crate::schema::{favorite_articles, users};
+
+    let (_, favorite_id) = users::table
+        .left_join(
+            favorite_articles::table.on(favorite_articles::user_id
+                .eq(users::id)
+                .and(favorite_articles::article_id.eq(article_id))),
+        )
+        .filter(users::id.eq(user_id))
+        .select((users::id, favorite_articles::user_id.nullable()))
+        .get_result::<(Uuid, Option<Uuid>)>(conn)?;
+
+    Ok(favorite_id.is_some())
 }
 
 fn get_favorited_and_following(
