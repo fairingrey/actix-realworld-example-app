@@ -15,7 +15,7 @@ use crate::models::{
     Article, ArticleChange, ArticleTag, NewArticle, NewArticleTag, NewFavoriteArticle, User,
 };
 use crate::prelude::*;
-use crate::utils::{auth::Auth, CustomDateTime};
+use crate::utils::CustomDateTime;
 
 // message handler implementations ↓
 
@@ -245,6 +245,8 @@ impl Handler<GetFeed> for DbExecutor {
     }
 }
 
+// local helper methods ↓
+
 fn generate_slug(uuid: &Uuid, title: &str) -> String {
     format!("{}-{}", to_blob(uuid), slugify(title))
 }
@@ -346,22 +348,6 @@ fn get_favorites_count(article_id: Uuid, conn: &PooledConn) -> Result<usize> {
         .count()
         .get_result::<i64>(conn)?;
     Ok(favorites_count as usize)
-}
-
-fn get_favorited(article_id: Uuid, user_id: Uuid, conn: &PooledConn) -> Result<bool> {
-    use crate::schema::{favorite_articles, users};
-
-    let (_, favorite_id) = users::table
-        .left_join(
-            favorite_articles::table.on(favorite_articles::user_id
-                .eq(users::id)
-                .and(favorite_articles::article_id.eq(article_id))),
-        )
-        .filter(users::id.eq(user_id))
-        .select((users::id, favorite_articles::user_id.nullable()))
-        .get_result::<(Uuid, Option<Uuid>)>(conn)?;
-
-    Ok(favorite_id.is_some())
 }
 
 fn get_favorited_and_following(
