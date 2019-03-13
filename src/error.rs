@@ -9,8 +9,6 @@ use serde_json::{Map as JsonMap, Value as JsonValue};
 use std::convert::From;
 use validator::ValidationErrors;
 
-// more error types can be found at below link but we should only need these for now
-// https://actix.rs/actix-web/actix_web/struct.HttpResponse.html
 #[derive(Fail, Debug)]
 pub enum Error {
     // 400
@@ -24,6 +22,10 @@ pub enum Error {
     // 403
     #[fail(display = "Forbidden: {}", _0)]
     Forbidden(JsonValue),
+
+    // 404
+    #[fail(display = "Not Found: {}", _0)]
+    NotFound(JsonValue),
 
     // 422
     #[fail(display = "Unprocessable Entity: {}", _0)]
@@ -42,6 +44,7 @@ impl ResponseError for Error {
             Error::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
             Error::Unauthorized(ref message) => HttpResponse::Unauthorized().json(message),
             Error::Forbidden(ref message) => HttpResponse::Forbidden().json(message),
+            Error::NotFound(ref message) => HttpResponse::NotFound().json(message),
             Error::UnprocessableEntity(ref message) => {
                 HttpResponse::build(StatusCode::UNPROCESSABLE_ENTITY).json(message)
             }
@@ -83,6 +86,9 @@ impl From<DieselError> for Error {
                     return Error::UnprocessableEntity(json!({ "error": message }));
                 }
                 Error::InternalServerError
+            }
+            DieselError::NotFound => {
+                Error::NotFound(json!({ "error": "requested record was not found" }))
             }
             _ => Error::InternalServerError,
         }
