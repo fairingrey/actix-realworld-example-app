@@ -1,5 +1,5 @@
 use actix::prelude::*;
-use blob_uuid::to_blob;
+use blob_uuid::{to_blob, to_uuid};
 use diesel::prelude::*;
 use slug::slugify;
 use uuid::Uuid;
@@ -173,7 +173,7 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
                     .map(|article_tag| article_tag.tag_name.to_owned())
                     .collect::<Vec<String>>()
             }
-            None => Vec::<String>::with_capacity(0),
+            None => select_tags_on_article(article.id, conn)?,
         };
 
         let favorites_count = get_favorites_count(article.id, conn)?;
@@ -243,11 +243,48 @@ impl Handler<FavoriteArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: FavoriteArticle, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::articles;
+        use crate::schema::{articles, favorite_articles, users};
 
         let conn = &self.0.get()?;
 
-        unimplemented!()
+        let (article, author) = articles::table
+            .inner_join(users::table)
+            .filter(articles::slug.eq(msg.slug))
+            .get_result::<(Article, User)>(conn)?;
+
+        diesel::insert_into(favorite_articles::table)
+            .values(NewFavoriteArticle {
+                user_id: msg.auth.user.id,
+                article_id: article.id,
+            })
+            .execute(conn)?;
+
+        let (favorited, following) =
+            get_favorited_and_following(article.id, author.id, msg.auth.user.id, conn)?;
+
+        let favorites_count = get_favorites_count(article.id, conn)?;
+
+        let tags = select_tags_on_article(article.id, conn)?;
+
+        Ok(ArticleResponse {
+            article: ArticleResponseInner {
+                slug: article.slug,
+                title: article.title,
+                description: article.description,
+                body: article.body,
+                tag_list: tags,
+                created_at: CustomDateTime(article.created_at),
+                updated_at: CustomDateTime(article.updated_at),
+                favorited,
+                favorites_count,
+                author: ProfileResponseInner {
+                    username: author.username,
+                    bio: author.bio,
+                    image: author.image,
+                    following,
+                },
+            },
+        })
     }
 }
 
@@ -259,11 +296,46 @@ impl Handler<UnfavoriteArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: UnfavoriteArticle, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::articles;
+        use crate::schema::{articles, favorite_articles, users};
 
         let conn = &self.0.get()?;
 
-        unimplemented!()
+        let (article, author) = articles::table
+            .inner_join(users::table)
+            .filter(articles::slug.eq(msg.slug))
+            .get_result::<(Article, User)>(conn)?;
+
+        diesel::delete(favorite_articles::table)
+            .filter(favorite_articles::user_id.eq(msg.auth.user.id))
+            .filter(favorite_articles::article_id.eq(article.id))
+            .execute(conn)?;
+
+        let (favorited, following) =
+            get_favorited_and_following(article.id, author.id, msg.auth.user.id, conn)?;
+
+        let favorites_count = get_favorites_count(article.id, conn)?;
+
+        let tags = select_tags_on_article(article.id, conn)?;
+
+        Ok(ArticleResponse {
+            article: ArticleResponseInner {
+                slug: article.slug,
+                title: article.title,
+                description: article.description,
+                body: article.body,
+                tag_list: tags,
+                created_at: CustomDateTime(article.created_at),
+                updated_at: CustomDateTime(article.updated_at),
+                favorited,
+                favorites_count,
+                author: ProfileResponseInner {
+                    username: author.username,
+                    bio: author.bio,
+                    image: author.image,
+                    following,
+                },
+            },
+        })
     }
 }
 
