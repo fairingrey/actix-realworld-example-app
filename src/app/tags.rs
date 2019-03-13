@@ -25,7 +25,7 @@ pub fn get(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error
         .send(GetTags {})
         .from_err()
         .and_then(|res| match res {
-            Ok(_) => Ok(HttpResponse::Ok().json(())),
+            Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
         })
 }

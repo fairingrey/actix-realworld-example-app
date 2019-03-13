@@ -139,7 +139,7 @@ pub fn delete(
             .from_err()
         })
         .and_then(|res| match res {
-            Ok(_) => Ok(HttpResponse::Ok().json(())),
+            Ok(_) => Ok(HttpResponse::Ok().finish()),
             Err(e) => Ok(e.error_response()),
         })
 }
