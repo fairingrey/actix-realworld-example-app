@@ -77,7 +77,7 @@ impl Handler<FollowProfile> for DbExecutor {
                 user_id: user_a.id,
                 follower_id: user_b.id,
             })
-            .get_result::<Follower>(conn)?;
+            .execute(conn)?;
 
         Ok(ProfileResponse {
             profile: ProfileResponseInner {

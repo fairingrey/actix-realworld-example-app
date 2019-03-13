@@ -228,6 +228,8 @@ impl Handler<DeleteArticle> for DbExecutor {
 
         delete_tags(article.id, conn)?;
 
+        delete_favorites(article.id, conn)?;
+
         match diesel::delete(articles::table.filter(articles::id.eq(article.id))).execute(conn) {
             Ok(_) => Ok(()),
             Err(e) => Err(e.into()),
@@ -396,7 +398,15 @@ fn delete_tags(article_id: Uuid, conn: &PooledConn) -> Result<()> {
     use crate::schema::article_tags;
 
     diesel::delete(article_tags::table.filter(article_tags::article_id.eq(article_id)))
-        .get_results::<ArticleTag>(conn)?;
+        .execute(conn)?;
+    Ok(())
+}
+
+fn delete_favorites(article_id: Uuid, conn: &PooledConn) -> Result<()> {
+    use crate::schema::favorite_articles;
+
+    diesel::delete(favorite_articles::table.filter(favorite_articles::article_id.eq(article_id)))
+        .execute(conn)?;
     Ok(())
 }
 
