@@ -6,15 +6,16 @@ use uuid::Uuid;
 
 use super::{DbExecutor, PooledConn};
 use crate::app::articles::{
-    ArticleListResponse, ArticleResponse, ArticleResponseInner, CreateArticleOuter, DeleteArticle,
-    FavoriteArticle, GetArticle, GetArticles, GetFeed, UnfavoriteArticle, UpdateArticleOuter,
+    ArticleListResponse, ArticleResponse, ArticleResponseInner, ArticlesParams, CreateArticleOuter,
+    DeleteArticle, FavoriteArticle, FeedParams, GetArticle, GetArticles, GetFeed,
+    UnfavoriteArticle, UpdateArticleOuter,
 };
 use crate::app::profiles::ProfileResponseInner;
 use crate::models::{
     Article, ArticleChange, ArticleTag, NewArticle, NewArticleTag, NewFavoriteArticle, User,
 };
 use crate::prelude::*;
-use crate::utils::CustomDateTime;
+use crate::utils::{auth::Auth, CustomDateTime};
 
 // message handler implementations ↓
 
@@ -49,31 +50,9 @@ impl Handler<CreateArticleOuter> for DbExecutor {
             .values(&new_article)
             .get_result::<Article>(conn)?;
 
-        let inserted_tags = replace_tags(article.id, msg.article.tag_list, conn)?;
-        let tags = inserted_tags
-            .iter()
-            .map(|article_tag| article_tag.tag_name.to_owned())
-            .collect::<Vec<String>>();
+        let _ = replace_tags(article.id, msg.article.tag_list, conn)?;
 
-        Ok(ArticleResponse {
-            article: ArticleResponseInner {
-                slug: article.slug,
-                title: article.title,
-                description: article.description,
-                body: article.body,
-                tag_list: tags,
-                created_at: CustomDateTime(article.created_at),
-                updated_at: CustomDateTime(article.updated_at),
-                favorited: false,
-                favorites_count: 0,
-                author: ProfileResponseInner {
-                    username: author.username,
-                    bio: author.bio,
-                    image: author.image,
-                    following: false, // <- note you can't follow yourself
-                },
-            },
-        })
+        get_article_response(article.slug, Some(article.author_id), conn)
     }
 }
 
@@ -89,39 +68,10 @@ impl Handler<GetArticle> for DbExecutor {
 
         let conn = &self.0.get()?;
 
-        let (article, author) = articles::table
-            .inner_join(users::table)
-            .filter(articles::slug.eq(msg.slug))
-            .get_result::<(Article, User)>(conn)?;
-
-        let (favorited, following) = match msg.auth {
-            Some(auth) => get_favorited_and_following(article.id, author.id, auth.user.id, conn)?,
-            None => (false, false),
-        };
-
-        let favorites_count = get_favorites_count(article.id, conn)?;
-
-        let tags = select_tags_on_article(article.id, conn)?;
-
-        Ok(ArticleResponse {
-            article: ArticleResponseInner {
-                slug: article.slug,
-                title: article.title,
-                description: article.description,
-                body: article.body,
-                tag_list: tags,
-                created_at: CustomDateTime(article.created_at),
-                updated_at: CustomDateTime(article.updated_at),
-                favorited,
-                favorites_count,
-                author: ProfileResponseInner {
-                    username: author.username,
-                    bio: author.bio,
-                    image: author.image,
-                    following,
-                },
-            },
-        })
+        match msg.auth {
+            Some(auth) => get_article_response(msg.slug, Some(auth.user.id), conn),
+            None => get_article_response(msg.slug, None, conn),
+        }
     }
 }
 
@@ -147,8 +97,6 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
             })));
         }
 
-        let author = msg.auth.user;
-
         let slug = match &msg.article.title {
             Some(title) => Some(generate_slug(&article.id, &title)),
             None => None,
@@ -165,7 +113,7 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
             .set(&article_change)
             .get_result::<Article>(conn)?;
 
-        let tags = match msg.article.tag_list {
+        let _ = match msg.article.tag_list {
             Some(tags) => {
                 let inserted_tags = replace_tags(article.id, tags, conn)?;
                 inserted_tags
@@ -176,29 +124,7 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
             None => select_tags_on_article(article.id, conn)?,
         };
 
-        let favorites_count = get_favorites_count(article.id, conn)?;
-
-        let favorited = get_favorited(article.id, author.id, conn)?;
-
-        Ok(ArticleResponse {
-            article: ArticleResponseInner {
-                slug: article.slug,
-                title: article.title,
-                description: article.description,
-                body: article.body,
-                tag_list: tags,
-                created_at: CustomDateTime(article.created_at),
-                updated_at: CustomDateTime(article.updated_at),
-                favorited,
-                favorites_count,
-                author: ProfileResponseInner {
-                    username: author.username,
-                    bio: author.bio,
-                    image: author.image,
-                    following: false,
-                },
-            },
-        })
+        get_article_response(article.slug, Some(article.author_id), conn)
     }
 }
 
@@ -218,9 +144,7 @@ impl Handler<DeleteArticle> for DbExecutor {
             .filter(articles::slug.eq(msg.slug))
             .get_result::<Article>(conn)?;
 
-        let author = msg.auth.user;
-
-        if author.id != article.author_id {
+        if msg.auth.user.id != article.author_id {
             return Err(Error::Forbidden(json!({
                 "error": "user is not the author of article in question",
             })));
@@ -249,10 +173,9 @@ impl Handler<FavoriteArticle> for DbExecutor {
 
         let conn = &self.0.get()?;
 
-        let (article, author) = articles::table
-            .inner_join(users::table)
+        let article = articles::table
             .filter(articles::slug.eq(msg.slug))
-            .get_result::<(Article, User)>(conn)?;
+            .get_result::<Article>(conn)?;
 
         diesel::insert_into(favorite_articles::table)
             .values(NewFavoriteArticle {
@@ -261,32 +184,7 @@ impl Handler<FavoriteArticle> for DbExecutor {
             })
             .execute(conn)?;
 
-        let (favorited, following) =
-            get_favorited_and_following(article.id, author.id, msg.auth.user.id, conn)?;
-
-        let favorites_count = get_favorites_count(article.id, conn)?;
-
-        let tags = select_tags_on_article(article.id, conn)?;
-
-        Ok(ArticleResponse {
-            article: ArticleResponseInner {
-                slug: article.slug,
-                title: article.title,
-                description: article.description,
-                body: article.body,
-                tag_list: tags,
-                created_at: CustomDateTime(article.created_at),
-                updated_at: CustomDateTime(article.updated_at),
-                favorited,
-                favorites_count,
-                author: ProfileResponseInner {
-                    username: author.username,
-                    bio: author.bio,
-                    image: author.image,
-                    following,
-                },
-            },
-        })
+        get_article_response(article.slug, Some(msg.auth.user.id), conn)
     }
 }
 
@@ -302,42 +200,16 @@ impl Handler<UnfavoriteArticle> for DbExecutor {
 
         let conn = &self.0.get()?;
 
-        let (article, author) = articles::table
-            .inner_join(users::table)
+        let article = articles::table
             .filter(articles::slug.eq(msg.slug))
-            .get_result::<(Article, User)>(conn)?;
+            .get_result::<Article>(conn)?;
 
         diesel::delete(favorite_articles::table)
             .filter(favorite_articles::user_id.eq(msg.auth.user.id))
             .filter(favorite_articles::article_id.eq(article.id))
             .execute(conn)?;
 
-        let (favorited, following) =
-            get_favorited_and_following(article.id, author.id, msg.auth.user.id, conn)?;
-
-        let favorites_count = get_favorites_count(article.id, conn)?;
-
-        let tags = select_tags_on_article(article.id, conn)?;
-
-        Ok(ArticleResponse {
-            article: ArticleResponseInner {
-                slug: article.slug,
-                title: article.title,
-                description: article.description,
-                body: article.body,
-                tag_list: tags,
-                created_at: CustomDateTime(article.created_at),
-                updated_at: CustomDateTime(article.updated_at),
-                favorited,
-                favorites_count,
-                author: ProfileResponseInner {
-                    username: author.username,
-                    bio: author.bio,
-                    image: author.image,
-                    following,
-                },
-            },
-        })
+        get_article_response(article.slug, Some(msg.auth.user.id), conn)
     }
 }
 
@@ -375,6 +247,49 @@ impl Handler<GetFeed> for DbExecutor {
 
 fn generate_slug(uuid: &Uuid, title: &str) -> String {
     format!("{}-{}", to_blob(uuid), slugify(title))
+}
+
+// This will reduce the amount of boilerplate when an ArticleResponse is needed
+fn get_article_response(
+    slug: String,
+    user_id: Option<Uuid>,
+    conn: &PooledConn,
+) -> Result<ArticleResponse> {
+    use crate::schema::{articles, followers, users};
+
+    let (article, author) = articles::table
+        .inner_join(users::table)
+        .filter(articles::slug.eq(slug))
+        .get_result::<(Article, User)>(conn)?;
+
+    let (favorited, following) = match user_id {
+        Some(user_id) => get_favorited_and_following(article.id, author.id, user_id, conn)?,
+        None => (false, false),
+    };
+
+    let favorites_count = get_favorites_count(article.id, conn)?;
+
+    let tags = select_tags_on_article(article.id, conn)?;
+
+    Ok(ArticleResponse {
+        article: ArticleResponseInner {
+            slug: article.slug,
+            title: article.title,
+            description: article.description,
+            body: article.body,
+            tag_list: tags,
+            created_at: CustomDateTime(article.created_at),
+            updated_at: CustomDateTime(article.updated_at),
+            favorited,
+            favorites_count,
+            author: ProfileResponseInner {
+                username: author.username,
+                bio: author.bio,
+                image: author.image,
+                following,
+            },
+        },
+    })
 }
 
 fn add_tag<T>(article_id: Uuid, tag_name: T, conn: &PooledConn) -> Result<ArticleTag>
