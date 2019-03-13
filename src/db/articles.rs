@@ -214,7 +214,24 @@ impl Handler<DeleteArticle> for DbExecutor {
 
         let conn = &self.0.get()?;
 
-        unimplemented!()
+        let article = articles::table
+            .filter(articles::slug.eq(msg.slug))
+            .get_result::<Article>(conn)?;
+
+        let author = msg.auth.user;
+
+        if author.id != article.author_id {
+            return Err(Error::Forbidden(json!({
+                "error": "user is not the author of article in question",
+            })));
+        }
+
+        delete_tags(article.id, conn)?;
+
+        match diesel::delete(articles::table.filter(articles::id.eq(article.id))).execute(conn) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.into()),
+        }
     }
 }
 
@@ -303,19 +320,24 @@ where
         .map_err(std::convert::Into::into) // <- clippy doesn't like it when I write this as |e| e.into() so...
 }
 
+fn delete_tags(article_id: Uuid, conn: &PooledConn) -> Result<()> {
+    use crate::schema::article_tags;
+
+    diesel::delete(article_tags::table.filter(article_tags::article_id.eq(article_id)))
+        .get_results::<ArticleTag>(conn)?;
+    Ok(())
+}
+
 fn replace_tags<I>(article_id: Uuid, tags: I, conn: &PooledConn) -> Result<Vec<ArticleTag>>
 where
     I: IntoIterator<Item = String>,
 {
-    use crate::schema::{article_tags, articles};
-
-    let _ = diesel::delete(article_tags::table.filter(article_tags::article_id.eq(article_id)))
-        .get_results::<ArticleTag>(conn)?;
+    delete_tags(article_id, conn)?;
 
     // this may look confusing but collect can convert to this
     // https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect
     tags.into_iter()
-        .map(|tag_name| add_tag(article_id, &tag_name.to_string(), &conn))
+        .map(|tag_name| add_tag(article_id, &tag_name.to_string(), conn))
         .collect::<Result<Vec<ArticleTag>>>()
 }
 
