@@ -2,13 +2,13 @@ use actix::prelude::*;
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use super::DbExecutor;
+use super::{DbExecutor, PooledConn};
 use crate::app::articles::comments::{
     AddCommentOuter, CommentListResponse, CommentResponse, CommentResponseInner, DeleteComment,
     GetComments,
 };
 use crate::app::profiles::ProfileResponseInner;
-use crate::models::{Comment, NewComment};
+use crate::models::{Comment, Follower, NewComment, User};
 use crate::prelude::*;
 use crate::utils::CustomDateTime;
 
@@ -43,20 +43,7 @@ impl Handler<AddCommentOuter> for DbExecutor {
             .values(new_comment)
             .get_result::<Comment>(conn)?;
 
-        Ok(CommentResponse {
-            comment: CommentResponseInner {
-                id: comment.id,
-                created_at: CustomDateTime(comment.created_at),
-                updated_at: CustomDateTime(comment.updated_at),
-                body: comment.body,
-                author: ProfileResponseInner {
-                    username: msg.auth.user.username,
-                    bio: msg.auth.user.bio,
-                    image: msg.auth.user.image,
-                    following: false,
-                },
-            },
-        })
+        get_comment_response(comment.id, Some(user_id), conn)
     }
 }
 
@@ -68,7 +55,7 @@ impl Handler<GetComments> for DbExecutor {
     type Result = Result<CommentListResponse>;
 
     fn handle(&mut self, msg: GetComments, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::{articles, comments, users};
+        use crate::schema::{articles, comments};
 
         let conn = &self.0.get()?;
 
@@ -81,9 +68,10 @@ impl Handler<GetComments> for DbExecutor {
             .filter(comments::article_id.eq(article_id))
             .load::<Comment>(conn)?;
 
-        // TODO
-
-        unimplemented!()
+        match msg.auth {
+            Some(auth) => get_comment_list_response(comments, Some(auth.user.id), conn),
+            None => get_comment_list_response(comments, None, conn),
+        }
     }
 }
 
@@ -113,4 +101,62 @@ impl Handler<DeleteComment> for DbExecutor {
 
         Ok(())
     }
+}
+
+fn get_comment_response(
+    comment_id: i32,
+    user_id: Option<Uuid>,
+    conn: &PooledConn,
+) -> Result<CommentResponse> {
+    use crate::schema::{comments, followers, users};
+
+    let (comment, commenter) = comments::table
+        .inner_join(users::table)
+        .filter(comments::id.eq(comment_id))
+        .get_result::<(Comment, User)>(conn)?;
+
+    let following = match user_id {
+        Some(user_id) => followers::table
+            .filter(followers::user_id.eq(commenter.id))
+            .filter(followers::follower_id.eq(user_id))
+            .first::<Follower>(conn)
+            .optional()?
+            .is_some(),
+        None => false,
+    };
+
+    Ok(CommentResponse {
+        comment: CommentResponseInner {
+            id: comment.id,
+            created_at: CustomDateTime(comment.created_at),
+            updated_at: CustomDateTime(comment.updated_at),
+            body: comment.body,
+            author: ProfileResponseInner {
+                username: commenter.username,
+                bio: commenter.bio,
+                image: commenter.image,
+                following,
+            },
+        },
+    })
+}
+
+fn get_comment_list_response(
+    comments: Vec<Comment>,
+    user_id: Option<Uuid>,
+    conn: &PooledConn,
+) -> Result<CommentListResponse> {
+    let comment_list = comments
+        .iter()
+        .map(
+            |comment| match get_comment_response(comment.id.to_owned(), user_id, conn) {
+                Ok(response) => Ok(response.comment),
+                Err(e) => Err(e),
+            },
+        )
+        .collect::<Result<Vec<CommentResponseInner>>>()?;
+
+    Ok(CommentListResponse {
+        comments: comment_list,
+    })
 }
