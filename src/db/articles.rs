@@ -1,14 +1,13 @@
 use actix::prelude::*;
-use blob_uuid::{to_blob, to_uuid};
+use blob_uuid::to_blob;
 use diesel::prelude::*;
 use slug::slugify;
 use uuid::Uuid;
 
 use super::{DbExecutor, PooledConn};
 use crate::app::articles::{
-    ArticleListResponse, ArticleResponse, ArticleResponseInner, ArticlesParams, CreateArticleOuter,
-    DeleteArticle, FavoriteArticle, FeedParams, GetArticle, GetArticles, GetFeed,
-    UnfavoriteArticle, UpdateArticleOuter,
+    ArticleListResponse, ArticleResponse, ArticleResponseInner, CreateArticleOuter, DeleteArticle,
+    FavoriteArticle, GetArticle, GetArticles, GetFeed, UnfavoriteArticle, UpdateArticleOuter,
 };
 use crate::app::profiles::ProfileResponseInner;
 use crate::models::{
@@ -64,8 +63,6 @@ impl Handler<GetArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: GetArticle, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::{articles, followers, users};
-
         let conn = &self.0.get()?;
 
         match msg.auth {
@@ -169,7 +166,7 @@ impl Handler<FavoriteArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: FavoriteArticle, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::{articles, favorite_articles, users};
+        use crate::schema::{articles, favorite_articles};
 
         let conn = &self.0.get()?;
 
@@ -196,7 +193,7 @@ impl Handler<UnfavoriteArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: UnfavoriteArticle, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::{articles, favorite_articles, users};
+        use crate::schema::{articles, favorite_articles};
 
         let conn = &self.0.get()?;
 
@@ -284,7 +281,7 @@ impl Handler<GetFeed> for DbExecutor {
     type Result = Result<ArticleListResponse>;
 
     fn handle(&mut self, msg: GetFeed, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::{articles, followers, users};
+        use crate::schema::{articles, followers};
 
         let conn = &self.0.get()?;
 
@@ -305,7 +302,7 @@ impl Handler<GetFeed> for DbExecutor {
             .offset(offset)
             .get_results::<Article>(conn)?;
 
-        get_article_list_response(articles, Some(msg.auth.user.id), conn)
+        get_article_list_response(articles, Some(user_id), conn)
     }
 }
 
@@ -321,7 +318,7 @@ fn get_article_response(
     user_id: Option<Uuid>,
     conn: &PooledConn,
 ) -> Result<ArticleResponse> {
-    use crate::schema::{articles, followers, users};
+    use crate::schema::{articles, users};
 
     let (article, author) = articles::table
         .inner_join(users::table)

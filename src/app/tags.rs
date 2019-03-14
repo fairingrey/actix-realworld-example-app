@@ -1,6 +1,5 @@
 use actix_web::{HttpRequest, HttpResponse, ResponseError};
-use futures::{future::result, Future};
-use validator::Validate;
+use futures::Future;
 
 use super::AppState;
 use crate::prelude::*;
