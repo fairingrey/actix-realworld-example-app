@@ -14,6 +14,10 @@ impl Handler<GetTags> for DbExecutor {
     type Result = Result<TagsResponse>;
 
     fn handle(&mut self, msg: GetTags, _: &mut Self::Context) -> Self::Result {
+        let conn = &self.0.get()?;
+
+        // TODO
+
         unimplemented!()
     }
 }

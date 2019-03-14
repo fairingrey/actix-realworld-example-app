@@ -5,7 +5,7 @@ use crate::schema::comments;
 
 #[derive(Debug, Queryable, Identifiable)]
 pub struct Comment {
-    pub id: usize,
+    pub id: i32,
     pub article_id: Uuid,
     pub user_id: Uuid,
     pub body: String,

@@ -22,7 +22,7 @@ use super::ArticlePath;
 #[derive(Debug, Deserialize)]
 pub struct ArticleCommentPath {
     slug: String,
-    comment_id: usize,
+    comment_id: i32,
 }
 
 // Client Messages ↓
@@ -50,7 +50,7 @@ pub struct GetComments {
 pub struct DeleteComment {
     pub auth: Auth,
     pub slug: String,
-    pub comment_id: usize,
+    pub comment_id: i32,
 }
 
 // JSON response objects ↓
@@ -63,7 +63,7 @@ pub struct CommentResponse {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CommentResponseInner {
-    pub id: usize,
+    pub id: i32,
     pub created_at: CustomDateTime,
     pub updated_at: CustomDateTime,
     pub body: String,
