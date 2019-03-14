@@ -13,11 +13,20 @@ impl Message for GetTags {
 impl Handler<GetTags> for DbExecutor {
     type Result = Result<TagsResponse>;
 
-    fn handle(&mut self, msg: GetTags, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, _msg: GetTags, _: &mut Self::Context) -> Self::Result {
+        use crate::schema::article_tags::dsl::*;
+
         let conn = &self.0.get()?;
 
-        // TODO
+        let tags = article_tags
+            .distinct_on(tag_name)
+            .load::<ArticleTag>(conn)?;
 
-        unimplemented!()
+        let tag_list = tags
+            .iter()
+            .map(|tag| tag.tag_name.to_owned())
+            .collect::<Vec<String>>();
+
+        Ok(TagsResponse { tags: tag_list })
     }
 }
