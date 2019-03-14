@@ -21,22 +21,22 @@ pub struct In<T> {
 
 #[derive(Debug, Deserialize)]
 pub struct ArticlePath {
-    slug: String,
+    pub slug: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ArticlesParams {
-    tag: Option<String>,
-    author: Option<String>,
-    favorited: Option<String>,
-    limit: Option<usize>,  // <- if not set, is 20
-    offset: Option<usize>, // <- if not set, is 0
+    pub tag: Option<String>,
+    pub author: Option<String>,
+    pub favorited: Option<String>,
+    pub limit: Option<usize>,  // <- if not set, is 20
+    pub offset: Option<usize>, // <- if not set, is 0
 }
 
 #[derive(Debug, Deserialize)]
 pub struct FeedParams {
-    limit: Option<usize>,
-    offset: Option<usize>,
+    pub limit: Option<usize>,
+    pub offset: Option<usize>,
 }
 
 // Client Messages ↓

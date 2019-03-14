@@ -221,11 +221,58 @@ impl Handler<GetArticles> for DbExecutor {
     type Result = Result<ArticleListResponse>;
 
     fn handle(&mut self, msg: GetArticles, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::articles;
+        use crate::schema::{articles, users};
 
         let conn = &self.0.get()?;
 
-        unimplemented!()
+        let mut query = articles::table.into_boxed();
+
+        if let Some(ref author_name) = msg.params.author {
+            let articles_by_author = articles::table
+                .inner_join(users::table)
+                .filter(users::username.eq(author_name))
+                .select(articles::id)
+                .load::<Uuid>(conn)?;
+
+            query = query.filter(articles::id.eq_any(articles_by_author));
+        }
+
+        if let Some(ref username_favorited_by) = msg.params.favorited {
+            use crate::schema::favorite_articles;
+
+            let favorite_article_ids: Vec<Uuid> = favorite_articles::table
+                .inner_join(users::table)
+                .filter(users::username.eq(username_favorited_by))
+                .select(favorite_articles::article_id)
+                .load::<Uuid>(conn)?;
+
+            query = query.filter(articles::id.eq_any(favorite_article_ids));
+        }
+
+        if let Some(ref tag) = msg.params.tag {
+            use crate::schema::article_tags;
+
+            let tagged_article_ids: Vec<Uuid> = article_tags::table
+                .filter(article_tags::tag_name.eq(tag))
+                .select(article_tags::article_id)
+                .load::<Uuid>(conn)?;
+
+            query = query.filter(articles::id.eq_any(tagged_article_ids));
+        }
+
+        let limit = std::cmp::min(msg.params.limit.unwrap_or(20), 100) as i64;
+        let offset = msg.params.offset.unwrap_or(0) as i64;
+
+        let matched_articles = query
+            .order(articles::created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .load::<Article>(conn)?;
+
+        match msg.auth {
+            Some(auth) => get_article_list_response(matched_articles, Some(auth.user.id), conn),
+            None => get_article_list_response(matched_articles, None, conn),
+        }
     }
 }
 
@@ -237,11 +284,28 @@ impl Handler<GetFeed> for DbExecutor {
     type Result = Result<ArticleListResponse>;
 
     fn handle(&mut self, msg: GetFeed, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::articles;
+        use crate::schema::{articles, followers, users};
 
         let conn = &self.0.get()?;
 
-        unimplemented!()
+        let limit = std::cmp::min(msg.params.limit.unwrap_or(20), 100) as i64;
+        let offset = msg.params.offset.unwrap_or(0) as i64;
+
+        let user_id = msg.auth.user.id;
+
+        let following_ids = followers::table
+            .filter(followers::follower_id.eq(user_id))
+            .select(followers::user_id)
+            .load::<Uuid>(conn)?;
+
+        let articles = articles::table
+            .filter(articles::author_id.eq_any(following_ids))
+            .order(articles::created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .get_results::<Article>(conn)?;
+
+        get_article_list_response(articles, Some(msg.auth.user.id), conn)
     }
 }
 
@@ -291,6 +355,27 @@ fn get_article_response(
                 following,
             },
         },
+    })
+}
+
+fn get_article_list_response(
+    articles: Vec<Article>,
+    user_id: Option<Uuid>,
+    conn: &PooledConn,
+) -> Result<ArticleListResponse> {
+    let article_list = articles
+        .iter()
+        .map(
+            |article| match get_article_response(article.slug.to_owned(), user_id, conn) {
+                Ok(response) => Ok(response.article),
+                Err(e) => Err(e),
+            },
+        )
+        .collect::<Result<Vec<ArticleResponseInner>>>()?;
+
+    Ok(ArticleListResponse {
+        articles_count: article_list.len(),
+        articles: article_list,
     })
 }
 
