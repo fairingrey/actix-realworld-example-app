@@ -4,7 +4,7 @@
 
 This codebase was created to demonstrate a fully fledged fullstack application built with [Actix](https://actix.rs/) including CRUD operations, authentication, routing, pagination, and more.
 
-This implementation is a work in progress. Feel free to take a look and help out if you'd like! Take a look at the issues if you want an idea of what else needs to be finished.
+This implementation currently needs to be reviewed. See the [Contributing](#contributing) section below.
 
 For more information on how this works with other frontends, head over to the [RealWorld](https://github.com/gothinkster/realworld) repo.
 
