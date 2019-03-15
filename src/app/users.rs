@@ -1,4 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, Json, ResponseError};
+use actix_web::{HttpRequest, HttpResponse, Json, ResponseError, State};
 use futures::{future::result, Future};
 use regex::Regex;
 use std::convert::From;
@@ -140,15 +140,13 @@ impl UserResponse {
 // Route handlers ↓
 
 pub fn register(
-    (form, req): (Json<In<RegisterUser>>, HttpRequest<AppState>),
+    (form, state): (Json<In<RegisterUser>>, State<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let register_user = form.into_inner().user;
 
-    let db = req.state().db.clone();
-
     result(register_user.validate())
         .from_err()
-        .and_then(move |_| db.send(register_user).from_err())
+        .and_then(move |_| state.db.send(register_user).from_err())
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),
@@ -156,15 +154,13 @@ pub fn register(
 }
 
 pub fn login(
-    (form, req): (Json<In<LoginUser>>, HttpRequest<AppState>),
+    (form, state): (Json<In<LoginUser>>, State<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let login_user = form.into_inner().user;
 
-    let db = req.state().db.clone();
-
     result(login_user.validate())
         .from_err()
-        .and_then(move |_| db.send(login_user).from_err())
+        .and_then(move |_| state.db.send(login_user).from_err())
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
             Err(e) => Ok(e.error_response()),

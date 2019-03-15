@@ -1,4 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, State};
 use futures::Future;
 
 use super::AppState;
@@ -18,8 +18,8 @@ pub struct TagsResponse {
 
 // Route handlers ↓
 
-pub fn get(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
-    req.state()
+pub fn get(state: State<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
+    state
         .db
         .send(GetTags {})
         .from_err()
