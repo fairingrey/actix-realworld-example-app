@@ -6,7 +6,7 @@ use super::DbExecutor;
 use crate::app::users::{LoginUser, RegisterUser, UpdateUserOuter, UserResponse};
 use crate::models::{NewUser, User, UserChange};
 use crate::prelude::*;
-use crate::utils::{hasher, PWD_SCHEME_VERSION};
+use crate::utils::{HASHER, PWD_SCHEME_VERSION};
 
 // message handler implementations ↓
 
@@ -23,7 +23,7 @@ impl Handler<RegisterUser> for DbExecutor {
         let new_user = NewUser {
             username: msg.username.clone(),
             email: msg.email.clone(),
-            password: hasher().hash(&msg.password)?,
+            password: HASHER.hash(&msg.password)?,
             bio: None,
             image: None,
         };
@@ -59,7 +59,7 @@ impl Handler<LoginUser> for DbExecutor {
 
         if checker.is_valid(provided_password_raw) {
             if checker.needs_update(PWD_SCHEME_VERSION) {
-                let new_password = hasher().hash(provided_password_raw)?;
+                let new_password = HASHER.hash(provided_password_raw)?;
                 return match diesel::update(users.find(stored_user.id))
                     .set(password.eq(new_password))
                     .get_result::<User>(conn)
@@ -93,7 +93,7 @@ impl Handler<UpdateUserOuter> for DbExecutor {
         let conn = &self.0.get()?;
 
         let updated_password = match update_user.password {
-            Some(updated_password) => Some(hasher().hash(&updated_password)?),
+            Some(updated_password) => Some(HASHER.hash(&updated_password)?),
             None => None,
         };
 

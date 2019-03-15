@@ -12,8 +12,6 @@ pub mod profiles;
 pub mod tags;
 pub mod users;
 
-const NUM_DB_THREADS: usize = 4;
-
 pub struct AppState {
     pub db: Addr<DbExecutor>,
 }
@@ -29,7 +27,7 @@ pub fn create() -> App<AppState> {
     let database_pool = new_pool(database_url).expect("Failed to create pool.");
 
     let database_address =
-        SyncArbiter::start(NUM_DB_THREADS, move || DbExecutor(database_pool.clone()));
+        SyncArbiter::start(num_cpus::get(), move || DbExecutor(database_pool.clone()));
 
     let state = AppState {
         db: database_address.clone(),
