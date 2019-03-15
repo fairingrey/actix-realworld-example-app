@@ -1,5 +1,6 @@
 use actix_web::{http::header::AUTHORIZATION, HttpRequest};
 use futures::{future::result, Future};
+use http::header::HeaderValue;
 
 use crate::app::AppState;
 use crate::models::User;
@@ -23,13 +24,13 @@ pub struct GenerateAuth {
 pub fn authenticate(req: &HttpRequest<AppState>) -> impl Future<Item = Auth, Error = Error> {
     let db = req.state().db.clone();
 
-    result(preprocess_authz_token(req))
+    result(preprocess_authz_token(req.headers().get(AUTHORIZATION)))
         .and_then(move |token| db.send(GenerateAuth { token }).from_err())
         .flatten()
 }
 
-fn preprocess_authz_token(req: &HttpRequest<AppState>) -> Result<String> {
-    let token = match req.headers().get(AUTHORIZATION) {
+fn preprocess_authz_token(token: Option<&HeaderValue>) -> Result<String> {
+    let token = match token {
         Some(token) => token.to_str().unwrap(),
         None => {
             return Err(Error::Unauthorized(json!({
