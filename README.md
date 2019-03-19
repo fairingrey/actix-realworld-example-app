@@ -34,7 +34,7 @@ You can view a full list of crates being used in [Cargo.toml](./Cargo.toml), but
 * Setup your database by running `diesel database setup`. Make sure it has completed successfully.
 * Build this project with `cargo build`. You are welcome to compile with `--release` if you'd like.
 * Run with `cargo run`.
-* The API URL will be whatever the `BIND_ADDRESS` value is in `.env`. Set it as such in your REST client ([Postman](https://www.getpostman.com/), [Insomnia](https://insomnia.rest/), etc.), import the [postman collection](https://github.com/gothinkster/realworld/blob/master/api/Conduit.postman_collection.json) and start testing it out!
+* The API URL will be whatever the `BIND_ADDRESS` value is in `.env` with the `/api` path included e.g. `https://127.0.0.1:3000/api`. Set it as such in your REST client ([Postman](https://www.getpostman.com/), [Insomnia](https://insomnia.rest/), etc.), import the [postman collection](https://github.com/gothinkster/realworld/blob/master/api/Conduit.postman_collection.json) and start testing it out!
 
 ## Contributing
 
