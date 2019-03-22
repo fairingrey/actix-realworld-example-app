@@ -58,11 +58,13 @@ pub fn create() -> App<AppState> {
                         .with_async_config(users::register, json_default_config)
                 })
                 .resource("users/login", |r| {
-                    r.method(Method::POST).with_async(users::login)
+                    r.method(Method::POST)
+                        .with_async_config(users::login, json_default_config)
                 })
                 .resource("user", |r| {
                     r.method(Method::GET).with_async(users::get_current);
-                    r.method(Method::PUT).with_async(users::update)
+                    r.method(Method::PUT)
+                        .with_async_config(users::update, json_default_config)
                 })
                 // Profile routes ↓
                 .resource("profiles/{username}", |r| {
