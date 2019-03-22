@@ -2,10 +2,9 @@ use crate::db::{new_pool, DbExecutor};
 use crate::error::Error;
 use actix::prelude::{Addr, SyncArbiter};
 use actix_web::{
-    dev::JsonConfig,
     http::{header, Method},
     middleware::{cors::Cors, Logger},
-    App, HttpRequest,
+    App, FromRequest, HttpRequest,
 };
 
 use std::env;
@@ -54,17 +53,14 @@ pub fn create() -> App<AppState> {
             scope
                 // User routes ↓
                 .resource("users", |r| {
-                    r.method(Method::POST)
-                        .with_async_config(users::register, json_default_config)
+                    r.method(Method::POST).with_async(users::register)
                 })
                 .resource("users/login", |r| {
-                    r.method(Method::POST)
-                        .with_async_config(users::login, json_default_config)
+                    r.method(Method::POST).with_async(users::login)
                 })
                 .resource("user", |r| {
                     r.method(Method::GET).with_async(users::get_current);
-                    r.method(Method::PUT)
-                        .with_async_config(users::update, json_default_config)
+                    r.method(Method::PUT).with_async(users::update)
                 })
                 // Profile routes ↓
                 .resource("profiles/{username}", |r| {
@@ -104,8 +100,10 @@ pub fn create() -> App<AppState> {
         })
 }
 
-pub fn json_default_config(cfg: &mut ((JsonConfig<AppState>, ()),)) {
-    (cfg.0)
-        .0
-        .error_handler(|err, _req| Error::BadRequest(json!({ "error": err.to_string() })).into());
+pub fn json_default_config<T>(cfg: &mut T::Config)
+where
+    T: FromRequest<AppState> + 'static,
+{
+    //    cfg.0
+    //        .error_handler(|err, _req| Error::BadRequest(json!({ "error": err.to_string() })).into());
 }
