@@ -1,10 +1,13 @@
 use crate::db::{new_pool, DbExecutor};
+use crate::error::Error;
 use actix::prelude::{Addr, SyncArbiter};
 use actix_web::{
+    dev::JsonConfig,
     http::{header, Method},
     middleware::{cors::Cors, Logger},
     App, HttpRequest,
 };
+
 use std::env;
 
 pub mod articles;
@@ -51,7 +54,8 @@ pub fn create() -> App<AppState> {
             scope
                 // User routes ↓
                 .resource("users", |r| {
-                    r.method(Method::POST).with_async(users::register)
+                    r.method(Method::POST)
+                        .with_async_config(users::register, json_default_config)
                 })
                 .resource("users/login", |r| {
                     r.method(Method::POST).with_async(users::login)
@@ -96,4 +100,10 @@ pub fn create() -> App<AppState> {
                 // Tags routes ↓
                 .resource("tags", |r| r.method(Method::GET).with_async(tags::get))
         })
+}
+
+pub fn json_default_config(cfg: &mut ((JsonConfig<AppState>, ()),)) {
+    (cfg.0)
+        .0
+        .error_handler(|err, _req| Error::BadRequest(json!({ "error": err.to_string() })).into());
 }

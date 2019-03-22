@@ -11,6 +11,10 @@ use validator::ValidationErrors;
 
 #[derive(Fail, Debug)]
 pub enum Error {
+    // 400
+    #[fail(display = "Bad Request: {}", _0)]
+    BadRequest(JsonValue),
+
     // 401
     #[fail(display = "Unauthorized: {}", _0)]
     Unauthorized(JsonValue),
@@ -37,6 +41,7 @@ pub enum Error {
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
+            Error::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
             Error::Unauthorized(ref message) => HttpResponse::Unauthorized().json(message),
             Error::Forbidden(ref message) => HttpResponse::Forbidden().json(message),
             Error::NotFound(ref message) => HttpResponse::NotFound().json(message),
