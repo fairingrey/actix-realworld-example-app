@@ -390,7 +390,7 @@ where
         .on_conflict((article_tags::article_id, article_tags::tag_name))
         .do_nothing()
         .get_result::<ArticleTag>(conn)
-        .map_err(std::convert::Into::into) // <- clippy doesn't like it when I write this as |e| e.into() so...
+        .map_err(Into::into)
 }
 
 fn delete_tags(article_id: Uuid, conn: &PooledConn) -> Result<()> {
