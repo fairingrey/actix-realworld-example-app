@@ -1,4 +1,5 @@
-use actix_web::{HttpRequest, HttpResponse, Path, ResponseError};
+use actix_web::{HttpRequest, HttpResponse, web::Path, web::Data};
+use actix_http::error::ResponseError;
 use futures::Future;
 
 use super::AppState;
@@ -51,11 +52,12 @@ pub struct ProfileResponseInner {
 // Route handlers ↓
 
 pub fn get(
-    (path, req): (Path<ProfilePath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
-    authenticate(&req)
+    authenticate(&state, &req)
         .then(move |auth| {
             db.send(GetProfile {
                 auth: auth.ok(),
@@ -70,11 +72,12 @@ pub fn get(
 }
 
 pub fn follow(
-    (path, req): (Path<ProfilePath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
-    authenticate(&req)
+    authenticate(&state, &req)
         .and_then(move |auth| {
             db.send(FollowProfile {
                 auth,
@@ -89,11 +92,12 @@ pub fn follow(
 }
 
 pub fn unfollow(
-    (path, req): (Path<ProfilePath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
-    authenticate(&req)
+    authenticate(&state, &req)
         .and_then(move |auth| {
             db.send(UnfollowProfile {
                 auth,

@@ -1,4 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, Json, ResponseError, State};
+use actix_web::{HttpRequest, HttpResponse, web::Json, ResponseError, web::Data};
 use futures::{future::result, Future};
 use regex::Regex;
 use std::convert::From;
@@ -140,7 +140,7 @@ impl UserResponse {
 // Route handlers ↓
 
 pub fn register(
-    (form, state): (Json<In<RegisterUser>>, State<AppState>),
+    (form, state): (Json<In<RegisterUser>>, Data<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let register_user = form.into_inner().user;
 
@@ -154,7 +154,7 @@ pub fn register(
 }
 
 pub fn login(
-    (form, state): (Json<In<LoginUser>>, State<AppState>),
+    (form, state): (Json<In<LoginUser>>, Data<AppState>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let login_user = form.into_inner().user;
 
@@ -167,21 +167,22 @@ pub fn login(
         })
 }
 
-pub fn get_current(req: HttpRequest<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
-    authenticate(&req)
+pub fn get_current(state: Data<AppState>, req: HttpRequest) -> impl Future<Item = HttpResponse, Error = Error> {
+    authenticate(&state, &req)
         .and_then(|auth| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth))))
 }
 
 pub fn update(
-    (form, req): (Json<In<UpdateUser>>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (form, req): (Json<In<UpdateUser>>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let update_user = form.into_inner().user;
 
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
     result(update_user.validate())
         .from_err()
-        .and_then(move |_| authenticate(&req))
+        .and_then(move |_| authenticate(&state, &req))
         .and_then(move |auth| db.send(UpdateUserOuter { auth, update_user }).from_err())
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),

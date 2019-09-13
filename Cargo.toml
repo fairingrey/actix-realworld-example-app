@@ -5,8 +5,11 @@ authors = ["grey <fairingrey@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-actix = "0.7.9"
-actix-web = "0.7.18"
+actix = "0.8.3"
+actix-web = "1.0.7"
+actix-cors = "0.1.0"
+actix-service = "0.4.2"
+actix-http = "0.2.10"
 blob-uuid = "0.3.0"
 chrono = "0.4.6"
 diesel = { version = "1.4.2", features = ["chrono", "postgres", "r2d2", "uuidv07", "serde_json"] }

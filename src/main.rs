@@ -20,7 +20,6 @@ mod prelude;
 mod schema;
 mod utils;
 
-use actix_web::server;
 use std::env;
 
 fn main() {
@@ -33,14 +32,7 @@ fn main() {
 
     let sys = actix::System::new("conduit");
 
-    let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS is not set");
-
-    server::new(app::create)
-        .bind(&bind_address)
-        .unwrap_or_else(|_| panic!("Could not bind server to address {}", &bind_address))
-        .start();
-
-    println!("You can access the server at {}", bind_address);
+    app::start();
 
     let _ = sys.run();
 }
