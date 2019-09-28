@@ -1,4 +1,5 @@
-use actix_web::{HttpRequest, HttpResponse, Json, Path, ResponseError};
+use actix_web::{HttpRequest, HttpResponse, web::Json, web::Path, web::Data};
+use actix_http::error::ResponseError;
 use futures::{future::result, Future};
 use validator::Validate;
 
@@ -78,19 +79,20 @@ pub struct CommentListResponse {
 // Route handlers ↓
 
 pub fn add(
+    state: Data<AppState>,
     (path, form, req): (
         Path<ArticlePath>,
         Json<In<AddComment>>,
-        HttpRequest<AppState>,
+        HttpRequest,
     ),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let comment = form.into_inner().comment;
 
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
     result(comment.validate())
         .from_err()
-        .and_then(move |_| authenticate(&req))
+        .and_then(move |_| authenticate(&state, &req))
         .and_then(move |auth| {
             db.send(AddCommentOuter {
                 auth,
@@ -106,11 +108,12 @@ pub fn add(
 }
 
 pub fn list(
-    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
-    authenticate(&req)
+    authenticate(&state, &req)
         .then(move |auth| {
             db.send(GetComments {
                 auth: auth.ok(),
@@ -125,11 +128,12 @@ pub fn list(
 }
 
 pub fn delete(
-    (path, req): (Path<ArticleCommentPath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ArticleCommentPath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
-    authenticate(&req)
+    authenticate(&state, &req)
         .and_then(move |auth| {
             db.send(DeleteComment {
                 auth,

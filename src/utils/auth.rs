@@ -1,4 +1,4 @@
-use actix_web::{http::header::AUTHORIZATION, HttpRequest};
+use actix_web::{http::header::AUTHORIZATION, HttpRequest, web::Data};
 use futures::{future::result, Future};
 use http::header::HeaderValue;
 
@@ -21,8 +21,8 @@ pub struct GenerateAuth {
     pub token: String,
 }
 
-pub fn authenticate(req: &HttpRequest<AppState>) -> impl Future<Item = Auth, Error = Error> {
-    let db = req.state().db.clone();
+pub fn authenticate(state: &Data<AppState>, req: &HttpRequest) -> impl Future<Item = Auth, Error = Error> {
+    let db = state.db.clone();
 
     result(preprocess_authz_token(req.headers().get(AUTHORIZATION)))
         .and_then(move |token| db.send(GenerateAuth { token }).from_err())

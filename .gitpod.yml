@@ -1,0 +1,17 @@
+image:
+  file: .gitpod.Dockerfile
+ports:
+  # API port
+  - port: 8088
+    onOpen: ignore
+  # DB port
+  - port: 5432
+    onOpen: ignore
+tasks:
+  - init: >
+      cat .env.example | sed "s/BIND_ADDRESS\s*=\s*127\.0\.0\.1/BIND_ADDRESS=0.0.0.0/g" > .env
+    command: >
+      pg_start &&
+      diesel database setup &&
+      cargo build &&
+      cargo run

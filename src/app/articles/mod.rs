@@ -1,6 +1,7 @@
 pub mod comments;
 
-use actix_web::{HttpRequest, HttpResponse, Json, Path, Query, ResponseError};
+use actix_web::{HttpRequest, HttpResponse, web::Json, web::Path, web::Query, web::Data};
+use actix_http::error::ResponseError;
 use futures::{future::result, Future};
 use validator::Validate;
 
@@ -148,14 +149,15 @@ pub struct ArticleListResponse {
 // Route handlers ↓
 
 pub fn create(
-    (form, req): (Json<In<CreateArticle>>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (form, req): (Json<In<CreateArticle>>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let article = form.into_inner().article;
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
     result(article.validate())
         .from_err()
-        .and_then(move |_| authenticate(&req))
+        .and_then(move |_| authenticate(&state, &req))
         .and_then(move |auth| db.send(CreateArticleOuter { auth, article }).from_err())
         .and_then(|res| match res {
             Ok(res) => Ok(HttpResponse::Ok().json(res)),
@@ -164,11 +166,12 @@ pub fn create(
 }
 
 pub fn get(
-    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
-    authenticate(&req)
+    authenticate(&state, &req)
         .then(move |auth| {
             db.send(GetArticle {
                 auth: auth.ok(),
@@ -183,19 +186,20 @@ pub fn get(
 }
 
 pub fn update(
+    state: Data<AppState>,
     (path, form, req): (
         Path<ArticlePath>,
         Json<In<UpdateArticle>>,
-        HttpRequest<AppState>,
+        HttpRequest,
     ),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let article = form.into_inner().article;
 
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
     result(article.validate())
         .from_err()
-        .and_then(move |_| authenticate(&req))
+        .and_then(move |_| authenticate(&state, &req))
         .and_then(move |auth| {
             db.send(UpdateArticleOuter {
                 auth,
@@ -211,11 +215,12 @@ pub fn update(
 }
 
 pub fn delete(
-    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    authenticate(&req)
+    authenticate(&state, &req)
         .and_then(move |auth| {
-            req.state()
+            state
                 .db
                 .send(DeleteArticle {
                     auth,
@@ -230,11 +235,12 @@ pub fn delete(
 }
 
 pub fn favorite(
-    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    authenticate(&req)
+    authenticate(&state, &req)
         .and_then(move |auth| {
-            req.state()
+            state
                 .db
                 .send(FavoriteArticle {
                     auth,
@@ -249,11 +255,12 @@ pub fn favorite(
 }
 
 pub fn unfavorite(
-    (path, req): (Path<ArticlePath>, HttpRequest<AppState>),
+    state: Data<AppState>,
+    (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    authenticate(&req)
+    authenticate(&state, &req)
         .and_then(move |auth| {
-            req.state()
+            state
                 .db
                 .send(UnfavoriteArticle {
                     auth,
@@ -268,11 +275,12 @@ pub fn unfavorite(
 }
 
 pub fn list(
-    (req, params): (HttpRequest<AppState>, Query<ArticlesParams>),
+    state: Data<AppState>,
+    (req, params): (HttpRequest, Query<ArticlesParams>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
-    authenticate(&req)
+    authenticate(&state, &req)
         .then(move |auth| {
             db.send(GetArticles {
                 auth: auth.ok(),
@@ -287,11 +295,12 @@ pub fn list(
 }
 
 pub fn feed(
-    (req, params): (HttpRequest<AppState>, Query<FeedParams>),
+    state: Data<AppState>,
+    (req, params): (HttpRequest, Query<FeedParams>),
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = req.state().db.clone();
+    let db = state.db.clone();
 
-    authenticate(&req)
+    authenticate(&state, &req)
         .and_then(move |auth| {
             db.send(GetFeed {
                 auth,
