@@ -58,7 +58,7 @@ impl Handler<LoginUser> for DbExecutor {
         let checker = HashBuilder::from_phc(&stored_user.password)?;
 
         if checker.is_valid(provided_password_raw) {
-            if checker.needs_update(PWD_SCHEME_VERSION) {
+            if checker.needs_update(Some(PWD_SCHEME_VERSION)) {
                 let new_password = HASHER.hash(provided_password_raw)?;
                 return match diesel::update(users.find(stored_user.id))
                     .set(password.eq(new_password))

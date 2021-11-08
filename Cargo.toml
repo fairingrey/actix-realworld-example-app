@@ -1,7 +1,7 @@
 [package]
 name = "conduit"
 version = "0.1.0"
-authors = ["grey <fairingrey@gmail.com>"]
+authors = ["grey <fairey@gmail.com>"]
 edition = "2018"
 
 [dependencies]
@@ -18,9 +18,8 @@ env_logger = "0.6.1"
 failure = "0.1.5"
 futures = "0.1.25"
 http = "0.1.16"
-jsonwebtoken = "5.0.1"
+jsonwebtoken = "7"
 lazy_static = "1.3.0"
-libreauth = "0.11.0"
 log = "0.4.6"
 num_cpus = "1.10.0"
 regex = "1.1.6"
@@ -31,3 +30,4 @@ slug = "0.1.4"
 uuid = { version = "0.7.4", features = ["serde", "v4"] }
 validator = "0.8.0"
 validator_derive = "0.8.0"
+libreauth = "0.14.1"
