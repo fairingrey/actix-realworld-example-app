@@ -2,8 +2,6 @@
 
 > ### [Actix](https://actix.rs/) codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
 
-❗ (2021/05/13) This codebase is currently unmaintained, and I am not interested in maintaining it. This relies on an old version of Actix -- developers who want to learn Actix should probably read the latest docs at the [Actix website](https://actix.rs/).
-
 This codebase was created to demonstrate a fully fledged fullstack application built with [Actix](https://actix.rs/) including CRUD operations, authentication, routing, pagination, and more. CORS, however, is not yet added.
 
 This implementation is not reviewed. See the [Contributing](#contributing) section below.

@@ -1,8 +1,8 @@
 [package]
 name = "conduit"
 version = "0.1.0"
-authors = ["grey <fairingrey@gmail.com>"]
-edition = "2018"
+authors = ["grey <fairingrey@gmail.com>", "thaddeus <inbox.733@gmail.com"]
+edition = "2021"
 
 [dependencies]
 actix = "0.13.0"
