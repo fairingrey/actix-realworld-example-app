@@ -62,19 +62,6 @@ pub async fn get(
     }).await??;
 
     Ok(HttpResponse::Ok().json(res))
-
-    // authenticate(&state, &req)
-    //     .then(move |auth| {
-    //         db.send(GetProfile {
-    //             auth: auth.ok(),
-    //             username: path.username.to_owned(),
-    //         })
-    //         .from_err()
-    //     })
-    //     .and_then(|res| match res {
-    //         Ok(res) => Ok(HttpResponse::Ok().json(res)),
-    //         Err(e) => Ok(e.error_response()),
-    //     })
 }
 
 pub async fn follow(
@@ -90,19 +77,6 @@ pub async fn follow(
     }).await??;
 
     Ok(HttpResponse::Ok().json(res))
-
-    // authenticate(&state, &req)
-    //     .and_then(move |auth| {
-    //         db.send(FollowProfile {
-    //             auth,
-    //             username: path.username.to_owned(),
-    //         })
-    //         .from_err()
-    //     })
-    //     .and_then(|res| match res {
-    //         Ok(res) => Ok(HttpResponse::Ok().json(res)),
-    //         Err(e) => Ok(e.error_response()),
-    //     })
 }
 
 pub async fn unfollow(
@@ -118,17 +92,4 @@ pub async fn unfollow(
     }).await??;
 
     Ok(HttpResponse::Ok().json(res))
-
-    // authenticate(&state, &req)
-    //     .and_then(move |auth| {
-    //         db.send(UnfollowProfile {
-    //             auth,
-    //             username: path.username.to_owned(),
-    //         })
-    //         .from_err()
-    //     })
-    //     .and_then(|res| match res {
-    //         Ok(res) => Ok(HttpResponse::Ok().json(res)),
-    //         Err(e) => Ok(e.error_response()),
-    //     })
 }

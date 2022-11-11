@@ -202,22 +202,6 @@ pub async fn update(
         }
         Err(err) => Ok(HttpResponse::BadRequest().json(err)),
     }
-
-    // result(article.validate())
-    //     .from_err()
-    //     .and_then(move |_| authenticate(&state, &req))
-    //     .and_then(move |auth| {
-    //         db.send(UpdateArticleOuter {
-    //             auth,
-    //             slug: path.slug.to_owned(),
-    //             article,
-    //         })
-    //         .from_err()
-    //     })
-    //     .and_then(|res| match res {
-    //         Ok(res) => Ok(HttpResponse::Ok().json(res)),
-    //         Err(e) => Ok(e.error_response()),
-    //     })
 }
 
 pub async fn delete(
