@@ -1,5 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, web::Json, ResponseError, web::Data};
-use futures::{future::result, Future};
+use actix_web::{HttpRequest, HttpResponse, web::Json, web::Data};
 use regex::Regex;
 use std::convert::From;
 use validator::Validate;
@@ -27,8 +26,8 @@ pub struct In<U> {
 pub struct RegisterUser {
     #[validate(
         length(
-            min = "1",
-            max = "20",
+            min = 1,
+            max = 20,
             message = "fails validation - must be 1-20 characters long"
         ),
         regex(
@@ -40,8 +39,8 @@ pub struct RegisterUser {
     #[validate(email(message = "fails validation - is not a valid email address"))]
     pub email: String,
     #[validate(length(
-        min = "8",
-        max = "72",
+        min = 8,
+        max = 72,
         message = "fails validation - must be 8-72 characters long"
     ))]
     pub password: String,
@@ -52,8 +51,8 @@ pub struct LoginUser {
     #[validate(email(message = "fails validation - is not a valid email address"))]
     pub email: String,
     #[validate(length(
-        min = "8",
-        max = "72",
+        min = 8,
+        max = 72,
         message = "fails validation - must be 8-72 characters long"
     ))]
     pub password: String,
@@ -63,8 +62,8 @@ pub struct LoginUser {
 pub struct UpdateUser {
     #[validate(
         length(
-            min = "1",
-            max = "20",
+            min = 1,
+            max = 20,
             message = "fails validation - must be 1-20 characters long"
         ),
         regex(
@@ -76,12 +75,12 @@ pub struct UpdateUser {
     #[validate(email)]
     pub email: Option<String>,
     #[validate(length(
-        min = "8",
-        max = "72",
+        min = 8,
+        max = 72,
         message = "fails validation - must be 8-72 characters long"
     ))]
     pub password: Option<String>,
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub bio: Option<String>,
     #[validate(url(message = "is not a URL"))]
     pub image: Option<String>,
@@ -139,53 +138,54 @@ impl UserResponse {
 
 // Route handlers ↓
 
-pub fn register(
+pub async fn register(
     (form, state): (Json<In<RegisterUser>>, Data<AppState>),
-) -> impl Future<Item = HttpResponse, Error = Error> {
+//) -> impl Future<Item = HttpResponse, Error = Error> {
+) -> Result<HttpResponse, Error> {
     let register_user = form.into_inner().user;
 
-    result(register_user.validate())
-        .from_err()
-        .and_then(move |_| state.db.send(register_user).from_err())
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+    match register_user.validate() {
+        Ok(()) => {
+            let res = state.db.send(register_user).await??;
+            Ok(HttpResponse::Ok().json(res))
+        }
+        Err(err) => Ok(HttpResponse::BadRequest().json(err))
+    }
 }
 
-pub fn login(
+pub async fn login(
     (form, state): (Json<In<LoginUser>>, Data<AppState>),
-) -> impl Future<Item = HttpResponse, Error = Error> {
+) -> Result<HttpResponse, Error> {
     let login_user = form.into_inner().user;
 
-    result(login_user.validate())
-        .from_err()
-        .and_then(move |_| state.db.send(login_user).from_err())
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+    match login_user.validate() {
+        Ok(()) => {
+            let res = state.db.send(login_user).await??;
+            Ok(HttpResponse::Ok().json(res))
+
+        }
+        Err(err) => Ok(HttpResponse::BadRequest().json(err))
+    }
 }
 
-pub fn get_current(state: Data<AppState>, req: HttpRequest) -> impl Future<Item = HttpResponse, Error = Error> {
-    authenticate(&state, &req)
-        .and_then(|auth| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth))))
+pub async fn get_current(state: Data<AppState>, req: HttpRequest) -> Result<HttpResponse, Error> { 
+    let auth = authenticate(&state, &req).await?;
+
+    Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth)))
 }
 
-pub fn update(
+pub async fn update(
     state: Data<AppState>,
     (form, req): (Json<In<UpdateUser>>, HttpRequest),
-) -> impl Future<Item = HttpResponse, Error = Error> {
+) -> Result<HttpResponse, Error> {
     let update_user = form.into_inner().user;
 
-    let db = state.db.clone();
-
-    result(update_user.validate())
-        .from_err()
-        .and_then(move |_| authenticate(&state, &req))
-        .and_then(move |auth| db.send(UpdateUserOuter { auth, update_user }).from_err())
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+    match update_user.validate() {
+        Ok(()) => {
+            let auth = authenticate(&state, &req).await?;
+            let res = state.db.send(UpdateUserOuter { auth, update_user }).await??;
+            Ok(HttpResponse::Ok().json(res))
+        }
+        Err(err) => Ok(HttpResponse::BadRequest().json(err))
+    }
 }

@@ -1,5 +1,4 @@
-use actix_web::{HttpResponse, ResponseError, web::Data};
-use futures::Future;
+use actix_web::{HttpResponse, web::Data};
 
 use super::AppState;
 use crate::prelude::*;
@@ -18,13 +17,10 @@ pub struct TagsResponse {
 
 // Route handlers ↓
 
-pub fn get(state: Data<AppState>) -> impl Future<Item = HttpResponse, Error = Error> {
-    state
+pub async fn get(state: Data<AppState>) -> Result<HttpResponse, Error> { 
+    let res = state
         .db
-        .send(GetTags {})
-        .from_err()
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+        .send(GetTags {}).await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }

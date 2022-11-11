@@ -9,8 +9,7 @@ extern crate lazy_static;
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-#[macro_use]
-extern crate validator_derive;
+
 
 mod app;
 mod db;
@@ -22,7 +21,8 @@ mod utils;
 
 use std::env;
 
-fn main() {
+#[actix_web::main] 
+async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
 
     if env::var("RUST_LOG").ok().is_none() {
@@ -30,9 +30,5 @@ fn main() {
     }
     env_logger::init();
 
-    let sys = actix::System::new("conduit");
-
-    app::start();
-
-    let _ = sys.run();
+    app::start().await
 }

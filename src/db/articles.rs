@@ -28,7 +28,7 @@ impl Handler<CreateArticleOuter> for DbExecutor {
     fn handle(&mut self, msg: CreateArticleOuter, _: &mut Self::Context) -> Self::Result {
         use crate::schema::articles;
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let author = msg.auth.user;
 
@@ -63,7 +63,7 @@ impl Handler<GetArticle> for DbExecutor {
     type Result = Result<ArticleResponse>;
 
     fn handle(&mut self, msg: GetArticle, _: &mut Self::Context) -> Self::Result {
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         match msg.auth {
             Some(auth) => get_article_response(msg.slug, Some(auth.user.id), conn),
@@ -82,7 +82,7 @@ impl Handler<UpdateArticleOuter> for DbExecutor {
     fn handle(&mut self, msg: UpdateArticleOuter, _: &mut Self::Context) -> Self::Result {
         use crate::schema::articles;
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let article = articles::table
             .filter(articles::slug.eq(msg.slug))
@@ -135,7 +135,7 @@ impl Handler<DeleteArticle> for DbExecutor {
     fn handle(&mut self, msg: DeleteArticle, _: &mut Self::Context) -> Self::Result {
         use crate::schema::articles;
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let article = articles::table
             .filter(articles::slug.eq(msg.slug))
@@ -168,7 +168,7 @@ impl Handler<FavoriteArticle> for DbExecutor {
     fn handle(&mut self, msg: FavoriteArticle, _: &mut Self::Context) -> Self::Result {
         use crate::schema::{articles, favorite_articles};
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let article = articles::table
             .filter(articles::slug.eq(msg.slug))
@@ -195,7 +195,7 @@ impl Handler<UnfavoriteArticle> for DbExecutor {
     fn handle(&mut self, msg: UnfavoriteArticle, _: &mut Self::Context) -> Self::Result {
         use crate::schema::{articles, favorite_articles};
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let article = articles::table
             .filter(articles::slug.eq(msg.slug))
@@ -220,7 +220,7 @@ impl Handler<GetArticles> for DbExecutor {
     fn handle(&mut self, msg: GetArticles, _: &mut Self::Context) -> Self::Result {
         use crate::schema::{articles, users};
 
-        let conn = &self.0.get()?;
+        let conn =&mut self.0.get()?;
 
         let mut query = articles::table.into_boxed();
 
@@ -283,7 +283,7 @@ impl Handler<GetFeed> for DbExecutor {
     fn handle(&mut self, msg: GetFeed, _: &mut Self::Context) -> Self::Result {
         use crate::schema::{articles, followers};
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let limit = std::cmp::min(msg.params.limit.unwrap_or(20), 100) as i64;
         let offset = msg.params.offset.unwrap_or(0) as i64;
@@ -316,7 +316,7 @@ fn generate_slug(uuid: &Uuid, title: &str) -> String {
 fn get_article_response(
     slug: String,
     user_id: Option<Uuid>,
-    conn: &PooledConn,
+    conn: &mut PooledConn,
 ) -> Result<ArticleResponse> {
     use crate::schema::{articles, users};
 
@@ -358,7 +358,7 @@ fn get_article_response(
 fn get_article_list_response(
     articles: Vec<Article>,
     user_id: Option<Uuid>,
-    conn: &PooledConn,
+    conn: &mut PooledConn,
 ) -> Result<ArticleListResponse> {
     let article_list = articles
         .iter()
@@ -376,7 +376,7 @@ fn get_article_list_response(
     })
 }
 
-fn add_tag<T>(article_id: Uuid, tag_name: T, conn: &PooledConn) -> Result<ArticleTag>
+fn add_tag<T>(article_id: Uuid, tag_name: T, conn: &mut PooledConn) -> Result<ArticleTag>
 where
     T: ToString,
 {
@@ -393,7 +393,7 @@ where
         .map_err(Into::into)
 }
 
-fn delete_tags(article_id: Uuid, conn: &PooledConn) -> Result<()> {
+fn delete_tags(article_id: Uuid, conn: &mut PooledConn) -> Result<()> {
     use crate::schema::article_tags;
 
     diesel::delete(article_tags::table.filter(article_tags::article_id.eq(article_id)))
@@ -401,7 +401,7 @@ fn delete_tags(article_id: Uuid, conn: &PooledConn) -> Result<()> {
     Ok(())
 }
 
-fn delete_favorites(article_id: Uuid, conn: &PooledConn) -> Result<()> {
+fn delete_favorites(article_id: Uuid, conn: &mut PooledConn) -> Result<()> {
     use crate::schema::favorite_articles;
 
     diesel::delete(favorite_articles::table.filter(favorite_articles::article_id.eq(article_id)))
@@ -409,7 +409,7 @@ fn delete_favorites(article_id: Uuid, conn: &PooledConn) -> Result<()> {
     Ok(())
 }
 
-fn replace_tags<I>(article_id: Uuid, tags: I, conn: &PooledConn) -> Result<Vec<ArticleTag>>
+fn replace_tags<I>(article_id: Uuid, tags: I, conn: &mut PooledConn) -> Result<Vec<ArticleTag>>
 where
     I: IntoIterator<Item = String>,
 {
@@ -422,7 +422,7 @@ where
         .collect::<Result<Vec<ArticleTag>>>()
 }
 
-fn get_favorites_count(article_id: Uuid, conn: &PooledConn) -> Result<usize> {
+fn get_favorites_count(article_id: Uuid, conn: &mut PooledConn) -> Result<usize> {
     use crate::schema::favorite_articles;
 
     let favorites_count = favorite_articles::table
@@ -436,7 +436,7 @@ fn get_favorited_and_following(
     article_id: Uuid,
     author_id: Uuid,
     user_id: Uuid,
-    conn: &PooledConn,
+    conn: &mut PooledConn,
 ) -> Result<(bool, bool)> {
     use crate::schema::{favorite_articles, followers, users};
 
@@ -463,7 +463,7 @@ fn get_favorited_and_following(
     Ok((favorite_id.is_some(), follow_id.is_some()))
 }
 
-fn select_tags_on_article(article_id: Uuid, conn: &PooledConn) -> Result<Vec<String>> {
+fn select_tags_on_article(article_id: Uuid, conn: &mut PooledConn) -> Result<Vec<String>> {
     use crate::schema::article_tags;
 
     let tags = article_tags::table

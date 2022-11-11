@@ -24,7 +24,7 @@ impl Handler<AddCommentOuter> for DbExecutor {
     fn handle(&mut self, msg: AddCommentOuter, _: &mut Self::Context) -> Self::Result {
         use crate::schema::{articles, comments};
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let article_id = articles::table
             .filter(articles::slug.eq(msg.slug))
@@ -57,7 +57,7 @@ impl Handler<GetComments> for DbExecutor {
     fn handle(&mut self, msg: GetComments, _: &mut Self::Context) -> Self::Result {
         use crate::schema::{articles, comments};
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let article_id = articles::table
             .filter(articles::slug.eq(msg.slug))
@@ -85,7 +85,7 @@ impl Handler<DeleteComment> for DbExecutor {
     fn handle(&mut self, msg: DeleteComment, _: &mut Self::Context) -> Self::Result {
         use crate::schema::comments::dsl::*;
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let comment = comments
             .filter(id.eq(msg.comment_id))
@@ -106,7 +106,7 @@ impl Handler<DeleteComment> for DbExecutor {
 fn get_comment_response(
     comment_id: i32,
     user_id: Option<Uuid>,
-    conn: &PooledConn,
+    conn: &mut PooledConn,
 ) -> Result<CommentResponse> {
     use crate::schema::{comments, followers, users};
 
@@ -144,7 +144,7 @@ fn get_comment_response(
 fn get_comment_list_response(
     comments: Vec<Comment>,
     user_id: Option<Uuid>,
-    conn: &PooledConn,
+    conn: &mut PooledConn,
 ) -> Result<CommentListResponse> {
     let comment_list = comments
         .iter()
