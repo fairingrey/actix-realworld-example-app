@@ -43,7 +43,6 @@ pub async fn start() -> std::io::Result<()> {
                 .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
                 .max_age(3600),
             None => Cors::default()
-                .allowed_origin("*")
                 .send_wildcard()
                 .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
                 .max_age(3600),
@@ -112,6 +111,5 @@ fn routes(app: &mut web::ServiceConfig) {
             )
             // Tags routes ↓
             .service(web::resource("tags").route(web::get().to(tags::get))),
-        
     );
 }

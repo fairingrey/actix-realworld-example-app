@@ -162,7 +162,6 @@ pub async fn login(
         Ok(()) => {
             let res = state.db.send(login_user).await??;
             Ok(HttpResponse::Ok().json(res))
-
         }
         Err(err) => Ok(HttpResponse::BadRequest().json(err))
     }
