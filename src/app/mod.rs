@@ -57,8 +57,6 @@ pub async fn start() -> std::io::Result<()> {
     .unwrap_or_else(|_| panic!("Could not bind server to address {}", &bind_address))
     .run()
     .await
-
-    //println!("You can access the server at {}", bind_address);
 }
 
 fn routes(app: &mut web::ServiceConfig) {

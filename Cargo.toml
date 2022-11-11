@@ -31,4 +31,3 @@ serde_json = "1.0.39"
 slug = "0.1.4"
 uuid = { version = "1.2", features = ["serde", "v4"] }
 validator = { version = "0.16", features = ["derive"] }
-#validator_derive = "0.16.0"
