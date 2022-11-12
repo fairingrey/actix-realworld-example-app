@@ -249,11 +249,15 @@ pub async fn list(
     state: Data<AppState>,
     (req, params): (HttpRequest, Query<ArticlesParams>),
 ) -> Result<HttpResponse, Error> {
-    let auth = authenticate(&state, &req).await?;
+    let auth = authenticate(&state, &req)
+        .await
+        .map(|auth| Some(auth))
+        .unwrap_or(None);
+
     let res = state
         .db
         .send(GetArticles {
-            auth: Some(auth),
+            auth,
             params: params.into_inner(),
         })
         .await??;
