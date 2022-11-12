@@ -1,7 +1,4 @@
 use actix_web::{http::header::AUTHORIZATION, web::Data, HttpRequest};
-//use actix_web::{web, HttpResponse};
-//use futures::TryFutureExt;
-//use futures::{future::ready, Future};
 use http::header::HeaderValue;
 
 use crate::app::AppState;
