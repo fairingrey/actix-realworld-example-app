@@ -142,8 +142,8 @@ pub async fn register(
     (form, state): (Json<In<RegisterUser>>, Data<AppState>),
 ) -> Result<HttpResponse, Error> {
     let register_user = form.into_inner().user;
-
     register_user.validate()?;
+
     let res = state.db.send(register_user).await??;
     Ok(HttpResponse::Ok().json(res))
 }
@@ -152,16 +152,16 @@ pub async fn login(
     (form, state): (Json<In<LoginUser>>, Data<AppState>),
 ) -> Result<HttpResponse, Error> {
     let login_user = form.into_inner().user;
-
     login_user.validate()?;
+
     let res = state.db.send(login_user).await??;
     Ok(HttpResponse::Ok().json(res))
 }
 
 pub async fn get_current(state: Data<AppState>, req: HttpRequest) -> Result<HttpResponse, Error> {
-    let auth = authenticate(&state, &req).await?;
-
-    Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth)))
+    authenticate(&state, &req)
+        .await
+        .and_then(|auth| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth))))
 }
 
 pub async fn update(
@@ -169,7 +169,6 @@ pub async fn update(
     (form, req): (Json<In<UpdateUser>>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let update_user = form.into_inner().user;
-
     update_user.validate()?;
 
     let auth = authenticate(&state, &req).await?;
