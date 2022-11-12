@@ -1,4 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, web::Path, web::Data};
+use actix_web::{web::Data, web::Path, HttpRequest, HttpResponse};
 
 use super::AppState;
 use crate::prelude::*;
@@ -53,11 +53,18 @@ pub async fn get(
     state: Data<AppState>,
     (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
-    let auth = authenticate(&state, &req).await?;
-    let res = state.db.send(GetProfile {
-        auth: Some(auth),
-        username: path.username.to_owned(),
-    }).await??;
+    let auth = authenticate(&state, &req)
+        .await
+        .map(|auth| Some(auth))
+        .unwrap_or(None);
+
+    let res = state
+        .db
+        .send(GetProfile {
+            auth,
+            username: path.username.to_owned(),
+        })
+        .await??;
 
     Ok(HttpResponse::Ok().json(res))
 }
@@ -67,10 +74,13 @@ pub async fn follow(
     (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db.send(FollowProfile {
-        auth,
-        username: path.username.to_owned(),
-    }).await??;
+    let res = state
+        .db
+        .send(FollowProfile {
+            auth,
+            username: path.username.to_owned(),
+        })
+        .await??;
 
     Ok(HttpResponse::Ok().json(res))
 }
@@ -80,10 +90,13 @@ pub async fn unfollow(
     (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db.send(UnfollowProfile {
-        auth,
-        username: path.username.to_owned(),
-    }).await??;
+    let res = state
+        .db
+        .send(UnfollowProfile {
+            auth,
+            username: path.username.to_owned(),
+        })
+        .await??;
 
     Ok(HttpResponse::Ok().json(res))
 }
