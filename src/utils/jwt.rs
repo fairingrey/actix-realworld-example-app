@@ -1,4 +1,5 @@
 use chrono::{Duration, Utc};
+use jsonwebtoken::{EncodingKey, DecodingKey};
 use jwt::{decode, encode, Header, TokenData, Validation};
 use std::env;
 use uuid::Uuid;
@@ -23,7 +24,7 @@ impl CanGenerateJwt for User {
 
         let header = Header::default();
         let secret = &get_secret();
-        let token = encode(&header, &claims, secret.as_ref())?;
+        let token = encode(&header, &claims, &EncodingKey::from_secret(secret.as_ref()))?;
 
         Ok(token)
     }
@@ -35,7 +36,7 @@ pub trait CanDecodeJwt {
 
 impl CanDecodeJwt for String {
     fn decode_jwt(&self) -> Result<TokenData<Claims>> {
-        match decode::<Claims>(&self, get_secret().as_ref(), &Validation::default()) {
+        match decode::<Claims>(&self, &DecodingKey::from_secret(get_secret().as_ref()), &Validation::default()) {
             Ok(res) => Ok(res),
             Err(e) => Err(e.into()),
         }

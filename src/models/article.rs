@@ -16,7 +16,7 @@ pub struct Article {
 }
 
 #[derive(Debug, Insertable)]
-#[table_name = "articles"]
+#[diesel(table_name = articles)]
 pub struct NewArticle {
     pub id: Uuid,
     pub author_id: Uuid,
@@ -27,7 +27,7 @@ pub struct NewArticle {
 }
 
 #[derive(Debug, AsChangeset)]
-#[table_name = "articles"]
+#[diesel(table_name = articles)]
 pub struct ArticleChange {
     pub slug: Option<String>,
     pub title: Option<String>,
@@ -36,7 +36,7 @@ pub struct ArticleChange {
 }
 
 #[derive(Debug, Insertable)]
-#[table_name = "favorite_articles"]
+#[diesel(table_name = favorite_articles)]
 pub struct NewFavoriteArticle {
     pub user_id: Uuid,
     pub article_id: Uuid,

@@ -1,8 +1,5 @@
 pub mod comments;
-
-use actix_web::{HttpRequest, HttpResponse, web::Json, web::Path, web::Query, web::Data};
-use actix_http::error::ResponseError;
-use futures::{future::result, Future};
+use actix_web::{web::Data, web::Json, web::Path, web::Query, HttpRequest, HttpResponse};
 use validator::Validate;
 
 use super::AppState;
@@ -45,13 +42,13 @@ pub struct FeedParams {
 #[derive(Debug, Validate, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateArticle {
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub title: String,
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub description: String,
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub body: String,
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub tag_list: Vec<String>,
 }
 
@@ -70,13 +67,13 @@ pub struct GetArticle {
 #[derive(Debug, Validate, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateArticle {
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub title: Option<String>,
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub description: Option<String>,
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub body: Option<String>,
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub tag_list: Option<Vec<String>>,
 }
 
@@ -148,168 +145,142 @@ pub struct ArticleListResponse {
 
 // Route handlers ↓
 
-pub fn create(
+pub async fn create(
     state: Data<AppState>,
     (form, req): (Json<In<CreateArticle>>, HttpRequest),
-) -> impl Future<Item = HttpResponse, Error = Error> {
+) -> Result<HttpResponse, Error> {
     let article = form.into_inner().article;
-    let db = state.db.clone();
+    article.validate()?;
 
-    result(article.validate())
-        .from_err()
-        .and_then(move |_| authenticate(&state, &req))
-        .and_then(move |auth| db.send(CreateArticleOuter { auth, article }).from_err())
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(CreateArticleOuter { auth, article })
+        .await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn get(
+pub async fn get(
     state: Data<AppState>,
     (path, req): (Path<ArticlePath>, HttpRequest),
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = state.db.clone();
+) -> Result<HttpResponse, Error> {
+    let auth = authenticate(&state, &req)
+        .await
+        .map(|auth| Some(auth))
+        .unwrap_or(None);
 
-    authenticate(&state, &req)
-        .then(move |auth| {
-            db.send(GetArticle {
-                auth: auth.ok(),
-                slug: path.slug.to_owned(),
-            })
-            .from_err()
+    let res = state
+        .db
+        .send(GetArticle {
+            auth,
+            slug: path.slug.to_owned(),
         })
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+        .await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn update(
+pub async fn update(
     state: Data<AppState>,
-    (path, form, req): (
-        Path<ArticlePath>,
-        Json<In<UpdateArticle>>,
-        HttpRequest,
-    ),
-) -> impl Future<Item = HttpResponse, Error = Error> {
+    (path, form, req): (Path<ArticlePath>, Json<In<UpdateArticle>>, HttpRequest),
+) -> Result<HttpResponse, Error> {
     let article = form.into_inner().article;
+    article.validate()?;
 
-    let db = state.db.clone();
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(UpdateArticleOuter {
+            auth,
+            slug: path.slug.to_owned(),
+            article,
+        })
+        .await??;
 
-    result(article.validate())
-        .from_err()
-        .and_then(move |_| authenticate(&state, &req))
-        .and_then(move |auth| {
-            db.send(UpdateArticleOuter {
-                auth,
-                slug: path.slug.to_owned(),
-                article,
-            })
-            .from_err()
-        })
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn delete(
+pub async fn delete(
     state: Data<AppState>,
     (path, req): (Path<ArticlePath>, HttpRequest),
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    authenticate(&state, &req)
-        .and_then(move |auth| {
-            state
-                .db
-                .send(DeleteArticle {
-                    auth,
-                    slug: path.slug.to_owned(),
-                })
-                .from_err()
+) -> Result<HttpResponse, Error> {
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(DeleteArticle {
+            auth,
+            slug: path.slug.to_owned(),
         })
-        .and_then(|res| match res {
-            Ok(_) => Ok(HttpResponse::Ok().finish()),
-            Err(e) => Ok(e.error_response()),
-        })
+        .await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn favorite(
+pub async fn favorite(
     state: Data<AppState>,
     (path, req): (Path<ArticlePath>, HttpRequest),
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    authenticate(&state, &req)
-        .and_then(move |auth| {
-            state
-                .db
-                .send(FavoriteArticle {
-                    auth,
-                    slug: path.slug.to_owned(),
-                })
-                .from_err()
+) -> Result<HttpResponse, Error> {
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(FavoriteArticle {
+            auth,
+            slug: path.slug.to_owned(),
         })
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+        .await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn unfavorite(
+pub async fn unfavorite(
     state: Data<AppState>,
     (path, req): (Path<ArticlePath>, HttpRequest),
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    authenticate(&state, &req)
-        .and_then(move |auth| {
-            state
-                .db
-                .send(UnfavoriteArticle {
-                    auth,
-                    slug: path.slug.to_owned(),
-                })
-                .from_err()
+) -> Result<HttpResponse, Error> {
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(UnfavoriteArticle {
+            auth,
+            slug: path.slug.to_owned(),
         })
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+        .await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn list(
+pub async fn list(
     state: Data<AppState>,
     (req, params): (HttpRequest, Query<ArticlesParams>),
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = state.db.clone();
+) -> Result<HttpResponse, Error> {
+    let auth = authenticate(&state, &req)
+        .await
+        .map(|auth| Some(auth))
+        .unwrap_or(None);
 
-    authenticate(&state, &req)
-        .then(move |auth| {
-            db.send(GetArticles {
-                auth: auth.ok(),
-                params: params.into_inner(),
-            })
-            .from_err()
+    let res = state
+        .db
+        .send(GetArticles {
+            auth,
+            params: params.into_inner(),
         })
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+        .await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn feed(
+pub async fn feed(
     state: Data<AppState>,
     (req, params): (HttpRequest, Query<FeedParams>),
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = state.db.clone();
+) -> Result<HttpResponse, Error> {
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(GetFeed {
+            auth,
+            params: params.into_inner(),
+        })
+        .await??;
 
-    authenticate(&state, &req)
-        .and_then(move |auth| {
-            db.send(GetFeed {
-                auth,
-                params: params.into_inner(),
-            })
-            .from_err()
-        })
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+    Ok(HttpResponse::Ok().json(res))
 }

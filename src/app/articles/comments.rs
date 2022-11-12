@@ -1,6 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, web::Json, web::Path, web::Data};
-use actix_http::error::ResponseError;
-use futures::{future::result, Future};
+use actix_web::{web::Data, web::Json, web::Path, HttpRequest, HttpResponse};
 use validator::Validate;
 
 use super::super::AppState;
@@ -30,7 +28,7 @@ pub struct ArticleCommentPath {
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct AddComment {
-    #[validate(length(min = "1", message = "fails validation - cannot be empty"))]
+    #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
     pub body: String,
 }
 
@@ -78,72 +76,59 @@ pub struct CommentListResponse {
 
 // Route handlers ↓
 
-pub fn add(
+pub async fn add(
     state: Data<AppState>,
-    (path, form, req): (
-        Path<ArticlePath>,
-        Json<In<AddComment>>,
-        HttpRequest,
-    ),
-) -> impl Future<Item = HttpResponse, Error = Error> {
+    (path, form, req): (Path<ArticlePath>, Json<In<AddComment>>, HttpRequest),
+) -> Result<HttpResponse, Error> {
     let comment = form.into_inner().comment;
+    comment.validate()?;
 
-    let db = state.db.clone();
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(AddCommentOuter {
+            auth,
+            slug: path.slug.to_owned(),
+            comment,
+        })
+        .await??;
 
-    result(comment.validate())
-        .from_err()
-        .and_then(move |_| authenticate(&state, &req))
-        .and_then(move |auth| {
-            db.send(AddCommentOuter {
-                auth,
-                slug: path.slug.to_owned(),
-                comment,
-            })
-            .from_err()
-        })
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn list(
+pub async fn list(
     state: Data<AppState>,
     (path, req): (Path<ArticlePath>, HttpRequest),
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = state.db.clone();
+) -> Result<HttpResponse, Error> {
+    let auth = authenticate(&state, &req)
+        .await
+        .map(|auth| Some(auth))
+        .unwrap_or(None);
 
-    authenticate(&state, &req)
-        .then(move |auth| {
-            db.send(GetComments {
-                auth: auth.ok(),
-                slug: path.slug.to_owned(),
-            })
-            .from_err()
+    let res = state
+        .db
+        .send(GetComments {
+            auth,
+            slug: path.slug.to_owned(),
         })
-        .and_then(|res| match res {
-            Ok(res) => Ok(HttpResponse::Ok().json(res)),
-            Err(e) => Ok(e.error_response()),
-        })
+        .await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub fn delete(
+pub async fn delete(
     state: Data<AppState>,
     (path, req): (Path<ArticleCommentPath>, HttpRequest),
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    let db = state.db.clone();
+) -> Result<HttpResponse, Error> {
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(DeleteComment {
+            auth,
+            slug: path.slug.to_owned(),
+            comment_id: path.comment_id.to_owned(),
+        })
+        .await??;
 
-    authenticate(&state, &req)
-        .and_then(move |auth| {
-            db.send(DeleteComment {
-                auth,
-                slug: path.slug.to_owned(),
-                comment_id: path.comment_id.to_owned(),
-            })
-            .from_err()
-        })
-        .and_then(|res| match res {
-            Ok(_) => Ok(HttpResponse::Ok().finish()),
-            Err(e) => Ok(e.error_response()),
-        })
+    Ok(HttpResponse::Ok().json(res))
 }

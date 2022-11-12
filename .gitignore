@@ -8,3 +8,4 @@
 
 # env file
 .env
+.vscode/

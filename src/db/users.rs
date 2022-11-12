@@ -28,7 +28,7 @@ impl Handler<RegisterUser> for DbExecutor {
             image: None,
         };
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         match diesel::insert_into(users)
             .values(new_user)
@@ -52,13 +52,13 @@ impl Handler<LoginUser> for DbExecutor {
 
         let provided_password_raw = &msg.password;
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let stored_user: User = users.filter(email.eq(msg.email)).first(conn)?;
         let checker = HashBuilder::from_phc(&stored_user.password)?;
 
         if checker.is_valid(provided_password_raw) {
-            if checker.needs_update(PWD_SCHEME_VERSION) {
+            if checker.needs_update(Some(PWD_SCHEME_VERSION)) {
                 let new_password = HASHER.hash(provided_password_raw)?;
                 return match diesel::update(users.find(stored_user.id))
                     .set(password.eq(new_password))
@@ -90,7 +90,7 @@ impl Handler<UpdateUserOuter> for DbExecutor {
         let auth = msg.auth;
         let update_user = msg.update_user;
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let updated_password = match update_user.password {
             Some(updated_password) => Some(HASHER.hash(&updated_password)?),

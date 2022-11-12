@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::schema::followers;
 
 #[derive(Debug, Queryable, Identifiable)]
-#[primary_key(user_id, follower_id)]
+#[diesel(primary_key(user_id, follower_id))]
 pub struct Follower {
     pub user_id: Uuid,
     pub follower_id: Uuid,
@@ -13,7 +13,7 @@ pub struct Follower {
 }
 
 #[derive(Debug, Insertable)]
-#[table_name = "followers"]
+#[diesel(table_name = followers)]
 pub struct NewFollower {
     pub user_id: Uuid,
     pub follower_id: Uuid,

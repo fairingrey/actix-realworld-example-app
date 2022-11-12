@@ -16,7 +16,7 @@ pub struct User {
 }
 
 #[derive(Debug, Insertable)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct NewUser {
     pub username: String,
     pub email: String,
@@ -26,7 +26,7 @@ pub struct NewUser {
 }
 
 #[derive(Debug, AsChangeset)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct UserChange {
     pub username: Option<String>,
     pub email: Option<String>,

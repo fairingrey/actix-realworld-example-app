@@ -16,7 +16,7 @@ impl Handler<GetTags> for DbExecutor {
     fn handle(&mut self, _msg: GetTags, _: &mut Self::Context) -> Self::Result {
         use crate::schema::article_tags::dsl::*;
 
-        let conn = &self.0.get()?;
+        let conn = &mut self.0.get()?;
 
         let tags = article_tags
             .distinct_on(tag_name)
