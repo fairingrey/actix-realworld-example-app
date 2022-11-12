@@ -27,10 +27,8 @@ pub async fn authenticate(
     state: &Data<AppState>,
     req: &HttpRequest,
 ) -> Result<Auth, Error> {
-    let db = state.db.clone();
-
     let token  = preprocess_authz_token(req.headers().get(AUTHORIZATION))?;
-    let auth = db.send(GenerateAuth { token }).await??;
+    let auth = state.db.send(GenerateAuth { token }).await??;
     Ok(auth)
 }
 

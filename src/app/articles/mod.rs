@@ -150,27 +150,24 @@ pub async fn create(
     (form, req): (Json<In<CreateArticle>>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let article = form.into_inner().article;
-    let db = state.db.clone();
+    article.validate()?;
 
-    match article.validate() {
-        Ok(()) => {
-            let auth = authenticate(&state, &req).await?;
-            let res = db.send(CreateArticleOuter { auth, article }).await??;
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(CreateArticleOuter { auth, article })
+        .await??;
 
-            Ok(HttpResponse::Ok().json(res))
-        }
-        Err(err) => Ok(HttpResponse::BadRequest().json(err)),
-    }
+    Ok(HttpResponse::Ok().json(res))
 }
 
 pub async fn get(
     state: Data<AppState>,
     (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
-    let db = state.db.clone();
-
     let auth = authenticate(&state, &req).await?;
-    let res = db
+    let res = state
+        .db
         .send(GetArticle {
             auth: Some(auth),
             slug: path.slug.to_owned(),
@@ -185,23 +182,19 @@ pub async fn update(
     (path, form, req): (Path<ArticlePath>, Json<In<UpdateArticle>>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let article = form.into_inner().article;
-    let db = state.db.clone();
+    article.validate()?;
 
-    match article.validate() {
-        Ok(()) => {
-            let auth = authenticate(&state, &req).await?;
-            let res = db
-                .send(UpdateArticleOuter {
-                    auth,
-                    slug: path.slug.to_owned(),
-                    article,
-                })
-                .await??;
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(UpdateArticleOuter {
+            auth,
+            slug: path.slug.to_owned(),
+            article,
+        })
+        .await??;
 
-            Ok(HttpResponse::Ok().json(res))
-        }
-        Err(err) => Ok(HttpResponse::BadRequest().json(err)),
-    }
+    Ok(HttpResponse::Ok().json(res))
 }
 
 pub async fn delete(
@@ -209,7 +202,8 @@ pub async fn delete(
     (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db
+    let res = state
+        .db
         .send(DeleteArticle {
             auth,
             slug: path.slug.to_owned(),
@@ -224,7 +218,8 @@ pub async fn favorite(
     (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db
+    let res = state
+        .db
         .send(FavoriteArticle {
             auth,
             slug: path.slug.to_owned(),
@@ -239,7 +234,8 @@ pub async fn unfavorite(
     (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db
+    let res = state
+        .db
         .send(UnfavoriteArticle {
             auth,
             slug: path.slug.to_owned(),
@@ -254,7 +250,8 @@ pub async fn list(
     (req, params): (HttpRequest, Query<ArticlesParams>),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db
+    let res = state
+        .db
         .send(GetArticles {
             auth: Some(auth),
             params: params.into_inner(),
@@ -269,7 +266,8 @@ pub async fn feed(
     (req, params): (HttpRequest, Query<FeedParams>),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db
+    let res = state
+        .db
         .send(GetFeed {
             auth,
             params: params.into_inner(),

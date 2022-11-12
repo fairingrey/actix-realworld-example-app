@@ -53,10 +53,8 @@ pub async fn get(
     state: Data<AppState>,
     (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
-    let db = state.db.clone();
-
     let auth = authenticate(&state, &req).await?;
-    let res = db.send(GetProfile {
+    let res = state.db.send(GetProfile {
         auth: Some(auth),
         username: path.username.to_owned(),
     }).await??;
@@ -68,10 +66,8 @@ pub async fn follow(
     state: Data<AppState>,
     (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
-    let db = state.db.clone();
-
     let auth = authenticate(&state, &req).await?;
-    let res = db.send(FollowProfile {
+    let res = state.db.send(FollowProfile {
         auth,
         username: path.username.to_owned(),
     }).await??;
@@ -83,10 +79,8 @@ pub async fn unfollow(
     state: Data<AppState>,
     (path, req): (Path<ProfilePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
-    let db = state.db.clone();
-
     let auth = authenticate(&state, &req).await?;
-    let res = db.send(UnfollowProfile {
+    let res = state.db.send(UnfollowProfile {
         auth,
         username: path.username.to_owned(),
     }).await??;

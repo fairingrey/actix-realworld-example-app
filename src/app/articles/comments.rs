@@ -1,4 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, web::Json, web::Path, web::Data};
+use actix_web::{web::Data, web::Json, web::Path, HttpRequest, HttpResponse};
 use validator::Validate;
 
 use super::super::AppState;
@@ -78,29 +78,22 @@ pub struct CommentListResponse {
 
 pub async fn add(
     state: Data<AppState>,
-    (path, form, req): (
-        Path<ArticlePath>,
-        Json<In<AddComment>>,
-        HttpRequest,
-    ),
+    (path, form, req): (Path<ArticlePath>, Json<In<AddComment>>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let comment = form.into_inner().comment;
+    comment.validate()?;
 
-    match comment.validate() {
-        Ok(()) => {
-            let auth = authenticate(&state, &req).await?;
-            let res = state.db
-                .send(AddCommentOuter {
-                    auth,
-                    slug: path.slug.to_owned(),
-                    comment,
-                })
-                .await??;
-        
-            Ok(HttpResponse::Ok().json(res))
-        }
-        Err(err) => Ok(HttpResponse::BadRequest().json(err)),
-    }
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(AddCommentOuter {
+            auth,
+            slug: path.slug.to_owned(),
+            comment,
+        })
+        .await??;
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
 pub async fn list(
@@ -108,7 +101,8 @@ pub async fn list(
     (path, req): (Path<ArticlePath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db
+    let res = state
+        .db
         .send(GetComments {
             auth: Some(auth),
             slug: path.slug.to_owned(),
@@ -123,7 +117,8 @@ pub async fn delete(
     (path, req): (Path<ArticleCommentPath>, HttpRequest),
 ) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
-    let res = state.db
+    let res = state
+        .db
         .send(DeleteComment {
             auth,
             slug: path.slug.to_owned(),

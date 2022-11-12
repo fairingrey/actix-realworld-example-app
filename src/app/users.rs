@@ -1,4 +1,4 @@
-use actix_web::{HttpRequest, HttpResponse, web::Json, web::Data};
+use actix_web::{web::Data, web::Json, HttpRequest, HttpResponse};
 use regex::Regex;
 use std::convert::From;
 use validator::Validate;
@@ -140,17 +140,12 @@ impl UserResponse {
 
 pub async fn register(
     (form, state): (Json<In<RegisterUser>>, Data<AppState>),
-//) -> impl Future<Item = HttpResponse, Error = Error> {
 ) -> Result<HttpResponse, Error> {
     let register_user = form.into_inner().user;
 
-    match register_user.validate() {
-        Ok(()) => {
-            let res = state.db.send(register_user).await??;
-            Ok(HttpResponse::Ok().json(res))
-        }
-        Err(err) => Ok(HttpResponse::BadRequest().json(err))
-    }
+    register_user.validate()?;
+    let res = state.db.send(register_user).await??;
+    Ok(HttpResponse::Ok().json(res))
 }
 
 pub async fn login(
@@ -158,16 +153,12 @@ pub async fn login(
 ) -> Result<HttpResponse, Error> {
     let login_user = form.into_inner().user;
 
-    match login_user.validate() {
-        Ok(()) => {
-            let res = state.db.send(login_user).await??;
-            Ok(HttpResponse::Ok().json(res))
-        }
-        Err(err) => Ok(HttpResponse::BadRequest().json(err))
-    }
+    login_user.validate()?;
+    let res = state.db.send(login_user).await??;
+    Ok(HttpResponse::Ok().json(res))
 }
 
-pub async fn get_current(state: Data<AppState>, req: HttpRequest) -> Result<HttpResponse, Error> { 
+pub async fn get_current(state: Data<AppState>, req: HttpRequest) -> Result<HttpResponse, Error> {
     let auth = authenticate(&state, &req).await?;
 
     Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth)))
@@ -179,12 +170,12 @@ pub async fn update(
 ) -> Result<HttpResponse, Error> {
     let update_user = form.into_inner().user;
 
-    match update_user.validate() {
-        Ok(()) => {
-            let auth = authenticate(&state, &req).await?;
-            let res = state.db.send(UpdateUserOuter { auth, update_user }).await??;
-            Ok(HttpResponse::Ok().json(res))
-        }
-        Err(err) => Ok(HttpResponse::BadRequest().json(err))
-    }
+    update_user.validate()?;
+
+    let auth = authenticate(&state, &req).await?;
+    let res = state
+        .db
+        .send(UpdateUserOuter { auth, update_user })
+        .await??;
+    Ok(HttpResponse::Ok().json(res))
 }
